@@ -53,6 +53,7 @@ import org.openimaj.io.FileUtils;
 import org.openimaj.tools.twitter.modes.preprocessing.TwitterPreprocessingMode;
 import org.openimaj.twitter.TwitterStatus;
 import org.openimaj.twitter.collection.FileTwitterStatusList;
+import org.openimaj.twitter.collection.MemoryTwitterStatusList;
 import org.openimaj.twitter.collection.TwitterStatusList;
 
 
@@ -66,7 +67,7 @@ import org.openimaj.twitter.collection.TwitterStatusList;
  */
 public class HadoopTwitterPreprocessingToolTest {
 	private static final String JSON_TWITTER = "/org/openimaj/twitter/json_tweets.txt";
-	private static final String RAW_TWITTER = "/org/openimaj/twitter/tweets.txt";
+	private static final String RAW_TWITTER = "/org/openimaj/twitter/tweets_fewer.txt";
 	private static final String BROKEN_RAW_TWITTER = "/org/openimaj/twitter/broken_raw_tweets.txt";
 	private File jsonTwitterInputFile;
 	private File rawTwitterInputFile;
@@ -97,6 +98,8 @@ public class HadoopTwitterPreprocessingToolTest {
 		return f;
 	}
 	
+	
+	
 	/**
 	 * Using hadoop to tokenise some json tweets
 	 * 
@@ -105,6 +108,18 @@ public class HadoopTwitterPreprocessingToolTest {
 	@Test
 	public void testJSONTokenise() throws Exception{
 		String mode = "TOKENISE";
+		File outJSON = File.createTempFile("tokens", ".json");
+		performTest(outJSON,jsonTwitterInputFile,mode);
+	}
+	
+	/**
+	 * Using hadoop to tokenise some json tweets
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testJSONStemmed() throws Exception{
+		String mode = "PORTER_STEM";
 		File outJSON = File.createTempFile("tokens", ".json");
 		performTest(outJSON,jsonTwitterInputFile,mode);
 	}
@@ -197,8 +212,19 @@ public class HadoopTwitterPreprocessingToolTest {
 	}
 	
 	boolean checkSameAnalysis(File unanalysed,File analysed, List<TwitterPreprocessingMode<?>> modelist) throws IOException {
-		TwitterStatusList unanalysedTweets = FileTwitterStatusList.read(unanalysed,"UTF-8");
-		TwitterStatusList analysedTweets = FileTwitterStatusList.read(analysed,"UTF-8");
+		TwitterStatusList<TwitterStatus>  unanalysedTweetsF = FileTwitterStatusList.read(unanalysed,"UTF-8");
+		TwitterStatusList<TwitterStatus>  analysedTweetsF = FileTwitterStatusList.read(analysed,"UTF-8");
+		
+		MemoryTwitterStatusList<TwitterStatus> unanalysedTweets = new MemoryTwitterStatusList<TwitterStatus>();
+		for (TwitterStatus twitterStatus : unanalysedTweetsF) {
+			if(twitterStatus.isInvalid()) continue;
+			unanalysedTweets.add(twitterStatus);
+		}
+		MemoryTwitterStatusList<TwitterStatus> analysedTweets = new MemoryTwitterStatusList<TwitterStatus>();
+		for (TwitterStatus twitterStatus : analysedTweetsF) {
+			if(twitterStatus.isInvalid()) continue;
+			analysedTweets.add(twitterStatus);
+		}
 		
 		Map<String,TwitterStatus> analysedMap = mapById(analysedTweets);
 		
@@ -222,7 +248,7 @@ public class HadoopTwitterPreprocessingToolTest {
 			if(i % (steps) == 0) System.out.format("...%d ",i);
 			int index = toTest[i];
 			TwitterStatus nowAnalysed = unanalysedTweets.get(index);
-			for (TwitterPreprocessingMode twitterPreprocessingMode : modelist) {
+			for (TwitterPreprocessingMode<?> twitterPreprocessingMode : modelist) {
 				twitterPreprocessingMode.process(nowAnalysed);
 			}
 			
@@ -238,7 +264,7 @@ public class HadoopTwitterPreprocessingToolTest {
 		return true;
 	}
 
-	private Map<String, TwitterStatus> mapById(TwitterStatusList analysedTweets) {
+	private Map<String, TwitterStatus> mapById(TwitterStatusList<TwitterStatus> analysedTweets) {
 		Map<String, TwitterStatus> statusMap = new HashMap<String, TwitterStatus>();
 		for (TwitterStatus s : analysedTweets) {
 			if(s.id != 0)

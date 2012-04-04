@@ -1,3 +1,32 @@
+/**
+ * Copyright (c) 2012, The University of Southampton and the individual contributors.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *   * 	Redistributions of source code must retain the above copyright notice,
+ * 	this list of conditions and the following disclaimer.
+ *
+ *   *	Redistributions in binary form must reproduce the above copyright notice,
+ * 	this list of conditions and the following disclaimer in the documentation
+ * 	and/or other materials provided with the distribution.
+ *
+ *   *	Neither the name of the University of Southampton nor the names of its
+ * 	contributors may be used to endorse or promote products derived from this
+ * 	software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package org.openimaj.twitter;
 
 import java.io.DataInput;
@@ -6,12 +35,18 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.openimaj.io.ReadWriteable;
+import org.openimaj.twitter.collection.TwitterStatusListUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -58,11 +93,11 @@ public class TwitterStatus implements ReadWriteable, Cloneable{
 	/**
 	 * 
 	 */
-	public String geo;
+	public Object geo;
 	/**
 	 * 
 	 */
-	public String coordinates;
+	public Object coordinates;
 	/**
 	 * 
 	 */
@@ -83,7 +118,12 @@ public class TwitterStatus implements ReadWriteable, Cloneable{
 	 * 
 	 */
     public long id;
+    /**
+	 * 
+	 */
+    public String created_at;
 	private Map<String,Object> analysis = new HashMap<String,Object>();
+	private boolean invalid = false;
 	
 	
 	/**
@@ -91,9 +131,22 @@ public class TwitterStatus implements ReadWriteable, Cloneable{
 	 */
 	public TwitterStatus() {}
 	
+	
+	/**
+	 * @return the tweet is either a delete notice, a scrub geo notice or some other non-status tweet
+	 */
+	public boolean isInvalid(){
+		return invalid;
+	}
+	
 	@Override
 	public void readASCII(Scanner in) throws IOException {
-		TwitterStatus status  = TwitterStatus.fromString(in.nextLine());
+		TwitterStatus status  = TwitterStatus.fromString(in.nextLine(),this.getClass());
+		if(status.text == null && this.analysis.size() == 0) {
+			this.invalid  = true;
+			return;
+		}
+		this.invalid = false;
 		try {
 			this.assignFrom(status);
 		} catch (Exception e) {
@@ -103,7 +156,7 @@ public class TwitterStatus implements ReadWriteable, Cloneable{
 	}
 
 	private void assignFrom(TwitterStatus fromJson) throws IllegalArgumentException, IllegalAccessException {
-		Field[] fields = this.getClass().getDeclaredFields();
+		Field[] fields = this.getClass().getFields();
 		for (Field field : fields) {
 			if(Modifier.isStatic(field.getModifiers())) continue;
 			field.set(this, field.get(fromJson));
@@ -210,41 +263,115 @@ public class TwitterStatus implements ReadWriteable, Cloneable{
 	
 	@Override
 	public TwitterStatus clone(){
-		return gson.fromJson(gson.toJson(this), TwitterStatus.class);
+		return clone(TwitterStatus.class);
+	}
+	
+	/**
+	 * Clones the tweet to the given class.
+	 * 
+	 * @param <T>
+	 * @param clazz
+	 * @return
+	 */
+	public <T extends TwitterStatus> T clone(Class<T> clazz){
+		return gson.fromJson(gson.toJson(this), clazz);
 	}
 
 	/**
-	 * Conveniance to allow writing of just the analysis to a writer
+	 * Convenience to allow writing of just the analysis to a writer
 	 * @param outputWriter
 	 * @param selectiveAnalysis
 	 */
 	public void writeASCIIAnalysis(PrintWriter outputWriter,List<String> selectiveAnalysis) {
-		Map<String,Map<String,Object>> toOutput = new HashMap<String,Map<String,Object>>();
+		writeASCIIAnalysis(outputWriter,selectiveAnalysis,new ArrayList<String>());
+	}
+	
+	/**
+	 * Convenience to allow writing of just the analysis and some status information to a writer
+	 * 
+	 * @param outputWriter
+	 * @param selectiveAnalysis
+	 * @param selectiveStatus
+	 */
+	public void writeASCIIAnalysis(PrintWriter outputWriter,List<String> selectiveAnalysis,List<String> selectiveStatus) {
+		Map<String,Object> toOutput = new HashMap<String,Object>();
 		Map<String,Object> analysisBit = new HashMap<String,Object>();
 		toOutput.put("analysis", analysisBit);
 		for (String analysisKey : selectiveAnalysis) {
 			analysisBit.put(analysisKey,getAnalysis(analysisKey));
 		}
+		for (String status : selectiveStatus) {
+			try {
+				
+				Field f = this.getClass().getField(status);
+				toOutput.put(status, f.get(this));
+			} catch (SecurityException e) {
+				System.err.println("Invalid field: " + status);
+			} catch (NoSuchFieldException e) {
+				System.err.println("Invalid field: " + status);
+			} catch (IllegalArgumentException e) {
+				System.err.println("Invalid field: " + status);
+			} catch (IllegalAccessException e) {
+				System.err.println("Invalid field: " + status);
+			}
+		}
 		gson.toJson(toOutput, outputWriter);
 	}
-
+	
 	/**
 	 * Create a tweet from a string
 	 * @param line either tweet json, otherwise the tweet text
 	 * @return a new tweet built around the tweet
 	 */
-	public static TwitterStatus fromString(String line) {
+	public static TwitterStatus fromString(String line)
+	{
+		return fromString(line,TwitterStatus.class);
+	}
+	
+	/**
+	 * A stricter version of {@link #fromString(String)}. If the string is not valid JSON, throw an exception
+	 * @param line either tweet json, otherwise the tweet text
+	 * @return a new tweet built around the tweet
+	 */
+	public static TwitterStatus fromJSONString(String line)
+	{
+		TwitterStatus status = gson.fromJson(line, TwitterStatus.class);
+		return status;
+	}
+	/**
+	 * Create a tweet from a string
+	 * @param line either tweet json, otherwise the tweet text
+	 * @param clazz the twitter status class to create
+	 * @return a new tweet built around the tweet
+	 */
+	public static TwitterStatus fromString(String line, Class<? extends TwitterStatus> clazz) {
 		TwitterStatus status = null;
 		try {
 			// try reading the string as json
-			status = gson.fromJson(line, TwitterStatus.class);
+			status = gson.fromJson(line, clazz);
 			status.assignFrom(status);
-		} catch (Exception e) {}
+		} catch (Exception e) {
+//			System.out.println("could not parse:" + e.getMessage() + "\n" + line );
+		}
 		if(status==null){ 
-			status  = new TwitterStatus();
+			status  = TwitterStatusListUtils.newInstance(clazz);
 			status .text = line;
 		}
+		if(status.text == null && status.analysis.size() == 0)
+		{
+			status.invalid = true;
+		}
 		return status ;
+	}
+	
+	/**
+	 * @return get the created_at date as a java date
+	 * @throws ParseException 
+	 */
+	public DateTime createdAt() throws ParseException{
+		DateTimeFormatter parser= DateTimeFormat.forPattern("EEE MMM dd HH:mm:ss Z yyyy");
+		if(created_at == null) return null;
+		return parser.parseDateTime(created_at);
 	}
 	
 }

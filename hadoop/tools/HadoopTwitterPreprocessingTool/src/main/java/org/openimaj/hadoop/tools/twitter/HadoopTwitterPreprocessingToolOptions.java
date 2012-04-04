@@ -30,11 +30,7 @@
 package org.openimaj.hadoop.tools.twitter;
 
 import java.io.IOException;
-import java.net.URI;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.map.MultithreadedMapper;
@@ -43,7 +39,7 @@ import org.kohsuke.args4j.CmdLineOptionsProvider;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.ProxyOptionHandler;
 import org.openimaj.hadoop.sequencefile.SequenceFileUtility;
-import org.openimaj.hadoop.tools.twitter.HadoopTwitterPreprocessingTool.TwitterPreprocessingMapper;
+import org.openimaj.hadoop.tools.HadoopToolsUtil;
 import org.openimaj.tools.twitter.options.AbstractTwitterPreprocessingToolOptions;
 
 /**
@@ -115,33 +111,19 @@ public class HadoopTwitterPreprocessingToolOptions extends AbstractTwitterPrepro
 	
 	@Override
 	public boolean validate() throws CmdLineException {
-		if(this.overwriteOutput() && this.beforeMaps){
-			
-			try {
-				URI outuri = SequenceFileUtility.convertToURI(this.getOutput());
-				FileSystem fs = getFileSystem(outuri);
-				fs.delete(new Path(outuri.toString()), true);
-			} catch (IOException e) {
-				
-			}
+		if(this.beforeMaps){
+			HadoopToolsUtil.validateInput(this);
+			HadoopToolsUtil.validateOutput(this);
 		}
 		return true;
 	}
-	
-	FileSystem getFileSystem(URI uri) throws IOException {
-		Configuration config = new Configuration();
-		FileSystem fs = FileSystem.get(uri, config);
-		if (fs instanceof LocalFileSystem) fs = ((LocalFileSystem)fs).getRaw();
-		return fs;
-	}
-	
 
 	/**
 	 * @return the list of input files
 	 * @throws IOException 
 	 */
 	public Path[] getInputPaths() throws IOException {
-		Path[] sequenceFiles = SequenceFileUtility.getFilePaths(this.getInput(), "part");
+		Path[] sequenceFiles = SequenceFileUtility.getFilePaths(this.getAllInputs(), "part");
 		return sequenceFiles;
 	}
 

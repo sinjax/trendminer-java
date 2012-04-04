@@ -1,3 +1,32 @@
+/**
+ * Copyright (c) 2012, The University of Southampton and the individual contributors.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *   * 	Redistributions of source code must retain the above copyright notice,
+ * 	this list of conditions and the following disclaimer.
+ *
+ *   *	Redistributions in binary form must reproduce the above copyright notice,
+ * 	this list of conditions and the following disclaimer in the documentation
+ * 	and/or other materials provided with the distribution.
+ *
+ *   *	Neither the name of the University of Southampton nor the names of its
+ * 	contributors may be used to endorse or promote products derived from this
+ * 	software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package org.openimaj.tools.twitter.options;
 
 import java.io.BufferedWriter;
@@ -6,10 +35,15 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.Iterator;
+import java.util.List;
 
 import org.kohsuke.args4j.CmdLineException;
+import org.openimaj.tools.FileToolsUtil;
+import org.openimaj.twitter.TwitterStatus;
 import org.openimaj.twitter.collection.FileTwitterStatusList;
 import org.openimaj.twitter.collection.TwitterStatusList;
 
@@ -21,10 +55,12 @@ import org.openimaj.twitter.collection.TwitterStatusList;
  */
 public class TwitterPreprocessingToolOptions extends  AbstractTwitterPreprocessingToolOptions{
 	
+	List<File> inputFiles;
 	File inputFile;
 	File outputFile;
 	private PrintWriter outWriter = null;
 	private boolean stdout;
+	private Iterator<File> fileIterator;
 	
 	/**
 	 * See: {@link AbstractTwitterPreprocessingToolOptions#AbstractTwitterPreprocessingToolOptions(String[])}
@@ -32,32 +68,33 @@ public class TwitterPreprocessingToolOptions extends  AbstractTwitterPreprocessi
 	 */
 	public TwitterPreprocessingToolOptions(String[] args) {
 		super(args);
+		this.fileIterator = this.inputFiles.iterator();
 	}
 
 	@Override
-	public boolean validate() throws CmdLineException {
-		inputFile = new File(input);
-		if(!inputFile.exists()) throw new CmdLineException(null,"Couldn't Find Input File");
-		if(output.equals("-")){
-			this.stdout = true;
-		}
-		else{
-			outputFile = new File(output);
-			if(outputFile.exists()){
-				if(force){
-					if(!outputFile.delete()) throw new CmdLineException(null,"Output file exists, could not remove");
-				}
-				else throw new CmdLineException(null,"Output file exists, not removing");
+	public boolean validate() throws CmdLineException{
+		try{
+			this.inputFiles = FileToolsUtil.validateLocalInput(this);
+			if(FileToolsUtil.isStdout(this)){
+				this.stdout = true;
 			}
+			else
+			{
+				this.outputFile = FileToolsUtil.validateLocalOutput(this);
+			}
+			return true;
 		}
-		return true;
+		catch(Exception e){
+			throw new CmdLineException(null,e.getMessage());
+		}
+		
 	}
 
 	/**
 	 * @return the list of tweets from the input file
 	 * @throws IOException
 	 */
-	public TwitterStatusList getTwitterStatusList() throws IOException {
+	public TwitterStatusList<TwitterStatus> getTwitterStatusList() throws IOException {
 		if(this.nTweets == -1){
 			return FileTwitterStatusList.read(this.inputFile,this.encoding);
 		}
@@ -75,7 +112,8 @@ public class TwitterPreprocessingToolOptions extends  AbstractTwitterPreprocessi
 	public PrintWriter outputWriter() throws UnsupportedEncodingException, FileNotFoundException {
 		if(this.outWriter == null){
 			if(this.stdout){
-				this.outWriter = new PrintWriter(System.out);
+				PrintStream sysout = new PrintStream(System.out, true, this.encoding);
+				this.outWriter = new PrintWriter(sysout);
 			}else{
 				this.outWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.outputFile),this.encoding)),true);
 			}
@@ -83,4 +121,23 @@ public class TwitterPreprocessingToolOptions extends  AbstractTwitterPreprocessi
 			
 		return this.outWriter;
 	}
+
+	/**
+	 * @return is there another file to analyse
+	 */
+	public boolean hasNextFile() {
+		return fileIterator.hasNext();
+	}
+
+	/**
+	 * Prepare the next file
+	 */
+	public void nextFile() {
+		if(fileIterator.hasNext())
+			TwitterPreprocessingToolOptions.this.inputFile = fileIterator.next();
+		else
+			TwitterPreprocessingToolOptions.this.inputFile = null;
+		
+	} 
+	
 }

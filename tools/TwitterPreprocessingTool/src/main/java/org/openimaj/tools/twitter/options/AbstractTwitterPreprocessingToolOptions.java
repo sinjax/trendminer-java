@@ -1,14 +1,42 @@
+/**
+ * Copyright (c) 2012, The University of Southampton and the individual contributors.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *   * 	Redistributions of source code must retain the above copyright notice,
+ * 	this list of conditions and the following disclaimer.
+ *
+ *   *	Redistributions in binary form must reproduce the above copyright notice,
+ * 	this list of conditions and the following disclaimer in the documentation
+ * 	and/or other materials provided with the distribution.
+ *
+ *   *	Neither the name of the University of Southampton nor the names of its
+ * 	contributors may be used to endorse or promote products derived from this
+ * 	software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package org.openimaj.tools.twitter.options;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.ProxyOptionHandler;
+import org.openimaj.tools.InOutToolOptions;
 import org.openimaj.tools.twitter.modes.output.TwitterOutputMode;
 import org.openimaj.tools.twitter.modes.output.TwitterOutputModeOption;
 import org.openimaj.tools.twitter.modes.preprocessing.TwitterPreprocessingMode;
@@ -21,24 +49,18 @@ import org.openimaj.tools.twitter.modes.preprocessing.TwitterPreprocessingModeOp
  * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
  *
  */
-public abstract class AbstractTwitterPreprocessingToolOptions {
-	@Option(name="--input", aliases="-i", required=true, usage="Input tweets", metaVar="STRING")
-	String input = null;
-	
-	@Option(name="--output", aliases="-o", required=false, usage="Tweet output location", metaVar="STRING")
-	String output = null;
-	
-	@Option(name="--remove-existing-output", aliases="-rm", required=false, usage="If existing output exists, remove it")
-	boolean force = false;
+public abstract class AbstractTwitterPreprocessingToolOptions extends InOutToolOptions{
 	
 	@Option(name="--mode", aliases="-m", required=true, usage="How should the tweets be processed.", handler=ProxyOptionHandler.class, multiValued=true)
 	List<TwitterPreprocessingModeOption> modeOptions = new ArrayList<TwitterPreprocessingModeOption>();
+	public List<TwitterPreprocessingMode<?>> modeOptionsOp = new ArrayList<TwitterPreprocessingMode<?>>();
 	
 	@Option(name="--encoding", aliases="-e", required=false, usage="The outputstreamwriter's text encoding", metaVar="STRING")
 	String encoding = "UTF-8";
 
 	@Option(name="--output-mode", aliases="-om", required=false, usage="How should the analysis be outputed.", handler=ProxyOptionHandler.class)
 	TwitterOutputModeOption outputModeOption = TwitterOutputModeOption.APPEND;
+	TwitterOutputMode outputModeOptionOp = TwitterOutputModeOption.APPEND.getOptions();
 	
 	@Option(name="--n-tweets", aliases="-n", required=false, usage="How many tweets from the input should this be applied to.", handler=ProxyOptionHandler.class)
 	int nTweets = -1;
@@ -74,15 +96,7 @@ public abstract class AbstractTwitterPreprocessingToolOptions {
 			}
 			
 			parser.parseArgument(args);
-			// TODO: Fix this hack
-			Set<TwitterPreprocessingModeOption> modes = new HashSet<TwitterPreprocessingModeOption>();
-			for (TwitterPreprocessingModeOption mode : modeOptions) {
-				modes.add(mode);
-			}
-			modeOptions.clear();
-			modeOptions.addAll(modes);
-//			System.out.println(Arrays.toString(args));
-			System.out.println("Number of mode options: " + modeOptions.size());
+			InOutToolOptions.prepareMultivaluedArgument(modeOptions);
 			this.validate();
 		} catch (CmdLineException e) {
 			System.err.println(e.getMessage());
@@ -107,7 +121,7 @@ public abstract class AbstractTwitterPreprocessingToolOptions {
 		}
 		ArrayList<TwitterPreprocessingMode<?>> modes = new ArrayList<TwitterPreprocessingMode<?>>();
 		for (TwitterPreprocessingModeOption modeOpt : this.modeOptions) {
-			modes.add(modeOpt.createMode());
+			modes.add(modeOpt.getOptions());
 		}
 		return modes;
 	}
@@ -117,7 +131,8 @@ public abstract class AbstractTwitterPreprocessingToolOptions {
 	 * @throws Exception
 	 */
 	public TwitterOutputMode ouputMode() throws Exception{
-		return outputModeOption.createMode(modeOptions);
+		outputModeOptionOp.validate(this);
+		return outputModeOptionOp;
 	}
 	
 	
@@ -148,26 +163,6 @@ public abstract class AbstractTwitterPreprocessingToolOptions {
 	 */
 	public long getTimeBeforeSkip() {
 		return this.timeBeforeSkip;
-	}
-	
-	/**
-	 * @return the input string option
-	 */
-	public String getInput(){
-		return this.input;
-	}
-	/**
-	 * @return the input string option
-	 */
-	public String getOutput(){
-		return this.output;
-	}
-	
-	/**
-	 * @return the force option, whether the output should be overwritten if it exists
-	 */
-	public boolean overwriteOutput(){
-		return this.force;
 	}
 	
 	/**

@@ -1,6 +1,36 @@
+/**
+ * Copyright (c) 2012, The University of Southampton and the individual contributors.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *   * 	Redistributions of source code must retain the above copyright notice,
+ * 	this list of conditions and the following disclaimer.
+ *
+ *   *	Redistributions in binary form must reproduce the above copyright notice,
+ * 	this list of conditions and the following disclaimer in the documentation
+ * 	and/or other materials provided with the distribution.
+ *
+ *   *	Neither the name of the University of Southampton nor the names of its
+ * 	contributors may be used to endorse or promote products derived from this
+ * 	software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package org.openimaj.tools.twitter;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 
 import org.openimaj.tools.twitter.modes.output.TwitterOutputMode;
@@ -27,11 +57,8 @@ public class TwitterPreprocessingTool
 	 */
 	public static void main(String[] args) throws IOException {
 		options = new TwitterPreprocessingToolOptions(args);
-		options.progress("Preparing tweets\n");
-		TwitterStatusList tweets = options.getTwitterStatusList();
-		options.progress("Processing " + tweets.size() + " tweets\n");
-		final List<TwitterPreprocessingMode<?>> modes;
 		TwitterOutputMode outputMode;
+		final List<TwitterPreprocessingMode<?>> modes;
 		try {
 			modes = options.preprocessingMode();
 			outputMode = options.ouputMode();
@@ -42,43 +69,58 @@ public class TwitterPreprocessingTool
 			return;
 		}
 		
-		long done = 0;
-		long skipped = 0;
-		long start = System.currentTimeMillis();
-		for (final TwitterStatus twitterStatus : tweets) {
-			if(options.veryLoud()){
-				System.out.println("\nPROCESSING TWEET");
-				System.out.println(twitterStatus);
-			}
-			WatchedRunner runner = new WatchedRunner(options.getTimeBeforeSkip()){
-				@Override
-				public void doTask() {
-					for (TwitterPreprocessingMode<?> mode : modes) {
-						mode.process(twitterStatus);
+		while(options.hasNextFile()){
+			options.nextFile();
+			options.progress("Preparing tweets\n");
+			TwitterStatusList<TwitterStatus> tweets = options.getTwitterStatusList();
+			options.progress("Processing " + tweets.size() + " tweets\n");
+			
+			long done = 0;
+			long skipped = 0;
+			long start = System.currentTimeMillis();
+			PrintWriter oWriter = options.outputWriter();
+			for (final TwitterStatus twitterStatus : tweets) {
+				if(twitterStatus.isInvalid()){
+					if(options.veryLoud()){
+						System.out.println("\nTWEET INVALID, skipping.");
 					}
+					continue;
 				}
-			};
-			runner.go();
-			if(runner.taskCompleted()){
-				done++;
-//				if(done%1000 == 0) 
-					options.progress("\rDone: " + done);
+				if(options.veryLoud()){
+					System.out.println("\nPROCESSING TWEET");
+					System.out.println(twitterStatus);
+				}
+				WatchedRunner runner = new WatchedRunner(options.getTimeBeforeSkip()){
+					@Override
+					public void doTask() {
+						for (TwitterPreprocessingMode<?> mode : modes) {
+							mode.process(twitterStatus);
+						}
+					}
+				};
+				runner.go();
+				if(runner.taskCompleted()){
+					done++;
+//					if(done%1000 == 0) 
+						options.progress("\rDone: " + done);
+					
+					outputMode.output(twitterStatus,oWriter);
+					oWriter.flush();
+				}
+				else{
+					skipped ++;
+				}
+				if(skipped > 0){
+					options.progress(" (Skipped: " + skipped + ") ");
+				}
 				
-				outputMode.output(twitterStatus,options.outputWriter());
+				
+				
 			}
-			else{
-				skipped ++;
-			}
-			if(skipped > 0){
-				options.progress(" (Skipped: " + skipped + ") ");
-			}
-			
-			
-			
+			long end = System.currentTimeMillis();
+			options.progress(String.format("\nTook: %d\n",(end-start)));
+			options.progress("Done!\n");
 		}
-		long end = System.currentTimeMillis();
-		options.progress(String.format("\nTook: %d\n",(end-start)));
-		options.progress("Done!\n");
 		options.outputWriter().flush();
 		options.outputWriter().close();
 	}

@@ -1,3 +1,32 @@
+/**
+ * Copyright (c) 2011, The University of Southampton and the individual contributors.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *   * 	Redistributions of source code must retain the above copyright notice,
+ * 	this list of conditions and the following disclaimer.
+ *
+ *   *	Redistributions in binary form must reproduce the above copyright notice,
+ * 	this list of conditions and the following disclaimer in the documentation
+ * 	and/or other materials provided with the distribution.
+ *
+ *   *	Neither the name of the University of Southampton nor the names of its
+ * 	contributors may be used to endorse or promote products derived from this
+ * 	software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package org.openimaj.text.nlp;
 
 import gov.sandia.cognition.text.token.DefaultToken;
@@ -13,9 +42,9 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.openimaj.text.nlp.patterns.AbbreviationPatternProvider;
 import org.openimaj.text.nlp.patterns.ComplicatedNumberPatternProvider;
-import org.openimaj.text.nlp.patterns.EdgePunctuationPatternProvider;
 import org.openimaj.text.nlp.patterns.EmailPatternProvider;
 import org.openimaj.text.nlp.patterns.EmbeddedApostrophePatternProvider;
+import org.openimaj.text.nlp.patterns.EmbeddedDashPatternProvider;
 import org.openimaj.text.nlp.patterns.EmoticonPatternProvider;
 import org.openimaj.text.nlp.patterns.EntityPatternProvider;
 import org.openimaj.text.nlp.patterns.PunctuationPatternProvider;
@@ -62,9 +91,10 @@ public class TweetTokeniser implements Iterable<Token>{
 	static EmailPatternProvider email = new EmailPatternProvider();
 	static AbbreviationPatternProvider abbrev = new AbbreviationPatternProvider(entity);
 	private static final String spaceRegex = "\\s+";
-	static String Separators = RegexUtil.regex_or("--+", "\u2015");
+	static String Separators = RegexUtil.regex_or_match("--+", "\u2015");
 	static String Decorations = new String(" [\u266b]+ ").replace(" ","");
 	static EmbeddedApostrophePatternProvider embedded = new EmbeddedApostrophePatternProvider(punctuation);
+	static EmbeddedDashPatternProvider embeddedDash = new EmbeddedDashPatternProvider(punctuation);
 	
 	
 	static String [] ProtectThese = new String[]{
@@ -75,13 +105,14 @@ public class TweetTokeniser implements Iterable<Token>{
 			entity.patternString(),
 			time.patternString(),
 			number.patternString(),
+//			embeddedDash.patternString(),
+			embedded.patternString(),
 			punctuation.patternString(),
 			abbrev.patternString(),
 			Separators,
 			Decorations,
-			embedded.patternString(),
 	};
-	static String oredProtect = RegexUtil.regex_or(ProtectThese);
+	static String oredProtect = RegexUtil.regex_or_match(ProtectThese);
 	static Pattern Protect_RE = Pattern.compile(oredProtect,Pattern.UNICODE_CASE|Pattern.CASE_INSENSITIVE);
 //	static Pattern Protect_RE = twitterPart.pattern();
 	
@@ -159,11 +190,11 @@ public class TweetTokeniser implements Iterable<Token>{
 		return t;
 	}
 	private void edge_punct_munge() {
-		this.text = EdgePunctuationPatternProvider.fixedges(this.text);
+//		this.text = EdgePunctuationPatternProvider.fixedges(this.text);
 	}
 
 	private void squeeze_whitespace() {
-		this.text.replaceAll(spaceRegex, " ");
+		this.text = this.text.replaceAll(spaceRegex, " ");
 	}
 
 	private void fixEncoding() throws UnsupportedEncodingException {
