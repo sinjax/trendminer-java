@@ -27,10 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.openimaj.ml.timeseries.interpolation;
+package org.openimaj.ml.timeseries.processor.interpolation;
 
 import org.openimaj.ml.timeseries.TimeSeries;
-import org.openimaj.ml.timeseries.interpolation.util.TimeSpanUtils;
+import org.openimaj.ml.timeseries.processor.TimeSeriesProcessor;
+import org.openimaj.ml.timeseries.processor.interpolation.util.TimeSpanUtils;
 import org.openimaj.ml.timeseries.series.DoubleTimeSeries;
 
 /**
@@ -40,7 +41,7 @@ import org.openimaj.ml.timeseries.series.DoubleTimeSeries;
  * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
  *
  */
-public abstract class TimeSeriesInterpolation implements TimeSeriesProcessor<double[],DoubleTimeSeries> {
+public abstract class TimeSeriesInterpolation implements TimeSeriesProcessor<double[],Double,DoubleTimeSeries> {
 	
 	private long[] times;
 	

@@ -48,11 +48,25 @@ public abstract class StageRunner extends Configured implements Tool{
 	@Override
 	public int run(String[] args) throws Exception {
 		args(args);
-		Job job = stage().stage(inputs(), output(),this.getConf());
-		job.waitForCompletion(true);
+		Stage<?, ?, ?, ?, ?, ?, ?, ?> thestage = stage();
+		Job job = thestage.stage(inputs(), output(),this.getConf());
+		if(shouldWait()){
+			job.waitForCompletion(true);
+			thestage.finished(job);
+		}
+		else{
+			job.submit();
+		}
 		return 0;
 	}
 	
+	/**
+	 * @return Whether this stage runner should wait for the stage to complete
+	 */
+	public boolean shouldWait() {
+		return true;
+	}
+
 	/**
 	 * @return the stage which should be ran 
 	 */

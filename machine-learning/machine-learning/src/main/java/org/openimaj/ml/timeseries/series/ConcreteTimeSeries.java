@@ -30,6 +30,7 @@
 package org.openimaj.ml.timeseries.series;
 
 import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -41,7 +42,8 @@ import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.openimaj.ml.timeseries.TimeSeries;
-import org.openimaj.ml.timeseries.interpolation.TimeSeriesCollectionAssignable;
+import org.openimaj.ml.timeseries.collection.TimeSeriesCollectionAssignable;
+import org.openimaj.util.pair.IndependentPair;
 import org.openimaj.util.reflection.ReflectionUtils;
 
 /**
@@ -54,7 +56,7 @@ import org.openimaj.util.reflection.ReflectionUtils;
  * @param <TS> 
  */
 public abstract class ConcreteTimeSeries<DATA,TS extends ConcreteTimeSeries<DATA,TS>> 
-	extends TimeSeries<DATA[],TS> 
+	extends TimeSeries<DATA[],DATA,TS> 
 	implements TimeSeriesCollectionAssignable<DATA, TS>
 {
 	private TreeMap<Long, DATA> timeSeries;
@@ -259,6 +261,10 @@ public abstract class ConcreteTimeSeries<DATA,TS extends ConcreteTimeSeries<DATA
 		this.set(assign.getTimes(),assign.getData());
 	}
 	
+	public void internalAssign(long[] times, DATA[] data) {
+		this.set(times, data);
+	};
+	
 	@Override
 	public void internalAssign(Collection<Long> times, Collection<DATA> data) {
 		this.set(times, data);
@@ -281,6 +287,31 @@ public abstract class ConcreteTimeSeries<DATA,TS extends ConcreteTimeSeries<DATA
 		}
 		return sb.toString();
 	}
+	
+	@Override
+	public Iterator<IndependentPair<Long, DATA>> iterator() {
+		return new Iterator<IndependentPair<Long,DATA>>(){
+			Iterator<Entry<Long, DATA>> internal = ConcreteTimeSeries.this.timeSeries.entrySet().iterator();
+			@Override
+			public boolean hasNext() {
+				return internal.hasNext();
+			}
+
+			@Override
+			public IndependentPair<Long, DATA> next() {
+				Entry<Long, DATA> next = internal.next();
+				return IndependentPair.pair(next.getKey(), next.getValue());
+			}
+
+			@Override
+			public void remove() {
+				internal.remove();
+			}
+			
+		};
+	}
+	
+	
 }
 
 

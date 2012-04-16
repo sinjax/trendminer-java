@@ -27,29 +27,32 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.openimaj.ml.timeseries.interpolation;
+package org.openimaj.ml.timeseries.collection;
+
+import java.util.Collection;
 
 import org.openimaj.ml.timeseries.TimeSeries;
 
+
 /**
- * An object which defines a set of arithmatic operations of the represented time series
+ * An object which can initialise a time series based on two java collections for time and data
  * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
  *
  * @param <DATA>
  * @param <TS>
  */
-public interface TimeSeriesArithmaticOperator<DATA, TS extends TimeSeries<DATA[],TS>> {
+public interface TimeSeriesCollectionAssignable<DATA,TS extends TimeSeries<?,DATA,TS>> {
+	/**
+	 * @param time
+	 * @param data
+	 * @return a new instance of the time series <TS> based on the two collections
+	 */
+	public TS newInstance(Collection<Long> time,Collection<DATA> data);
 	
 	/**
-	 * @return a 0 data for this time series
+	 * Assign these values of data and time to the internal collection
+	 * @param time
+	 * @param data
 	 */
-	public DATA zero();
-	
-	/**
-	 * add together all time series data elements
-	 * @return Addition of all time series
-	 */
-	public DATA sum();
-	
-	
+	public void internalAssign(Collection<Long> time, Collection<DATA> data);
 }

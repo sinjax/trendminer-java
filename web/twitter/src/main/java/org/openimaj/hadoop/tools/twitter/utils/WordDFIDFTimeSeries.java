@@ -29,10 +29,16 @@
  */
 package org.openimaj.hadoop.tools.twitter.utils;
 
-import org.openimaj.ml.timeseries.interpolation.TimeSeriesArithmaticOperator;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Scanner;
+
+import org.openimaj.io.ReadWriteableASCII;
+import org.openimaj.ml.timeseries.TimeSeriesArithmaticOperator;
 import org.openimaj.ml.timeseries.series.ConcreteTimeSeries;
 import org.openimaj.ml.timeseries.series.DoubleTimeSeries;
 import org.openimaj.ml.timeseries.series.DoubleTimeSeriesProvider;
+import org.openimaj.util.pair.IndependentPair;
 
 /**
  * A time series of WordDFIDF instances
@@ -43,7 +49,8 @@ public class WordDFIDFTimeSeries
 	extends ConcreteTimeSeries<WordDFIDF, WordDFIDFTimeSeries>
 	implements 
 		TimeSeriesArithmaticOperator<WordDFIDF, WordDFIDFTimeSeries>,
-		DoubleTimeSeriesProvider
+		DoubleTimeSeriesProvider,
+		ReadWriteableASCII
 {
 
 	@Override
@@ -85,6 +92,30 @@ public class WordDFIDFTimeSeries
 			values[i++] = wordDFIDF.dfidf();
 		}
 		return new DoubleTimeSeries(times,values);
+	}
+
+	@Override
+	public void readASCII(Scanner in) throws IOException {
+		int count = in.nextInt();
+		for (int i = 0; i < count; i++) {
+			WordDFIDF instance = new WordDFIDF();
+			instance.readASCII(in);
+			this.add(instance.timeperiod, instance);
+		}
+	}
+
+	@Override
+	public String asciiHeader() {
+		return "";
+	}
+
+	@Override
+	public void writeASCII(PrintWriter out) throws IOException {
+		out.print(this.size() + " ");
+		for (IndependentPair<Long, WordDFIDF> i : this) {
+			i.secondObject().writeASCII(out);
+			out.print(" ");
+		}
 	}
 
 }

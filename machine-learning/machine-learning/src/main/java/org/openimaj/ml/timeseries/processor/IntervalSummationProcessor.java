@@ -27,11 +27,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.openimaj.ml.timeseries.interpolation;
+package org.openimaj.ml.timeseries.processor;
 
 import java.util.LinkedList;
 
 import org.openimaj.ml.timeseries.TimeSeries;
+import org.openimaj.ml.timeseries.TimeSeriesArithmaticOperator;
+import org.openimaj.ml.timeseries.collection.TimeSeriesCollectionAssignable;
 
 /**
  * Given time step calculate each timestep such that 
@@ -43,19 +45,21 @@ import org.openimaj.ml.timeseries.TimeSeries;
  * This processor implicity assumes that the first time step is "the beggining of the time series"
  * 
  * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
- *
+ * 
+ * @param <ALLDATA>
  * @param <DATA>
  * @param <TS>
  */
 public class IntervalSummationProcessor
 	<
-		DATA, 
+		ALLDATA,
+		DATA,
 		TS extends 
-			TimeSeries<DATA[],TS> 
+			TimeSeries<ALLDATA,DATA,TS> 
 			& TimeSeriesArithmaticOperator<DATA,TS> 
 			& TimeSeriesCollectionAssignable<DATA,TS>
 	> 
-	implements TimeSeriesArrayDataProcessor<DATA, TS>{
+	implements TimeSeriesProcessor<ALLDATA,DATA, TS>{
 	
 	private long[] times;
 

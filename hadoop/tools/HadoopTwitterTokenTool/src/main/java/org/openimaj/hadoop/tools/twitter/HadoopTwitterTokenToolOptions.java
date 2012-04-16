@@ -53,16 +53,21 @@ import org.openimaj.tools.InOutToolOptions;
  */
 public class HadoopTwitterTokenToolOptions extends InOutToolOptions{
 	@Option(name="--mode", aliases="-m", required=false, usage="How should the tweet tokens should be counted and processed.", handler=ProxyOptionHandler.class, multiValued=true)
-	private List<TwitterTokenModeOption> modeOptions = new ArrayList<TwitterTokenModeOption>();
-	List<TwitterTokenMode> modeOptionsOp = new ArrayList<TwitterTokenMode>();
+	TwitterTokenModeOption modeOptions = TwitterTokenModeOption.JUST_OUTPUT;
+	TwitterTokenMode modeOptionsOp = TwitterTokenModeOption.JUST_OUTPUT.getOptions();
 	
 	@SuppressWarnings("unused")
 	@Option(name="--output-mode", aliases="-om", required=false, usage="How should tokens be outputted.", handler=ProxyOptionHandler.class)
-	private TwitterTokenOutputModeOption outputModeOptions = TwitterTokenOutputModeOption.CSV;
+	private TwitterTokenOutputModeOption outputModeOptions = TwitterTokenOutputModeOption.NONE;
 	TwitterTokenOutputMode outputModeOptionsOp = TwitterTokenOutputModeOption.NONE.getOptions();
 	
 	@Option(name="--json-path", aliases="-j", required=false, usage="A JSONPath query defining the field to find tokens to count", metaVar="STRING")
 	String tokensJSONPath = "analysis.stemmed";
+	
+	@Option(name="--json-path-filter", aliases="-jf", required=false, usage="Add jsonpath filters, if a given entry passes the filters it is used", multiValued = true)
+	List<String> jsonPathFilters;
+	private JsonPathFilterSet filters;
+	
 	
 	@Option(name="--time-delta", aliases="-t", required=false, usage="The length of a time window in minutes (defaults to 1 hour (60))", metaVar="STRING")
 	private long timeDelta = 60;
@@ -110,8 +115,8 @@ public class HadoopTwitterTokenToolOptions extends InOutToolOptions{
 		CmdLineParser parser = new CmdLineParser(this);
 		try {
 			parser.parseArgument(args);
-			prepareMultivaluedArgument(modeOptions,TwitterTokenModeOption.JUST_OUTPUT);
-			prepareMultivaluedArgument(modeOptionsOp,TwitterTokenModeOption.JUST_OUTPUT.getOptions());
+//			prepareMultivaluedArgument(modeOptions,TwitterTokenModeOption.JUST_OUTPUT);
+//			prepareMultivaluedArgument(modeOptionsOp,TwitterTokenModeOption.JUST_OUTPUT.getOptions());
 			this.validate();
 		} catch (CmdLineException e) {
 			System.err.println(e.getMessage());
@@ -127,10 +132,10 @@ public class HadoopTwitterTokenToolOptions extends InOutToolOptions{
 	public void prepare() throws CmdLineException{
 		CmdLineParser parser = new CmdLineParser(this);
 		parser.parseArgument(args);
-		prepareMultivaluedArgument(modeOptions,TwitterTokenModeOption.JUST_OUTPUT);
-		prepareMultivaluedArgument(modeOptionsOp,TwitterTokenModeOption.JUST_OUTPUT.getOptions());
+//		prepareMultivaluedArgument(modeOptions,TwitterTokenModeOption.JUST_OUTPUT);
+//		prepareMultivaluedArgument(modeOptionsOp,TwitterTokenModeOption.JUST_OUTPUT.getOptions());
 //			System.out.println(Arrays.toString(args));
-		System.out.println("Number of mode options: " + modeOptions.size());
+//		System.out.println("Number of mode options: " + modeOptions.size());
 		this.validate();
 	}
 
@@ -149,9 +154,8 @@ public class HadoopTwitterTokenToolOptions extends InOutToolOptions{
 	public boolean noOutput() {
 		
 		return 
-			(		
-					this.modeOptions.size() == 1 && 
-					this.modeOptions.get(0) == TwitterTokenModeOption.JUST_OUTPUT
+			(		 
+					this.modeOptions == TwitterTokenModeOption.JUST_OUTPUT
 			);
 	}
 
@@ -229,5 +233,12 @@ public class HadoopTwitterTokenToolOptions extends InOutToolOptions{
 		this.setInput(output);
 		return;
 		
+	}
+
+	public JsonPathFilterSet getFilters() {
+		if(this.filters == null){
+			this.filters = new JsonPathFilterSet(jsonPathFilters);
+		}
+		return this.filters;
 	}
 }

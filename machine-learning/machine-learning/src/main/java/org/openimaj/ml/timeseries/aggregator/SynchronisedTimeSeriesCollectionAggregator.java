@@ -27,21 +27,32 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.openimaj.ml.timeseries.interpolation;
+package org.openimaj.ml.timeseries.aggregator;
 
 import org.openimaj.ml.timeseries.TimeSeries;
+import org.openimaj.ml.timeseries.collection.SynchronisedTimeSeriesCollection;
 
 /**
- * A time series processor alters a type of {@link TimeSeries} in place.
+ * A time series collection aggregators take as input a time series collection
+ * and output a specified type
+ * 
  * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
- *
- * @param <DATA>
- * @param <TIMESERIES>
+ * @param <OUTPUT> The output type of the aggregator
+ * @param <TIMESERIES> the time series returned by the various {@link TimeSeries#get(long)} functions
+ * @param <STSCOLLECTION> the input collection type
  */
-public interface TimeSeriesArrayDataProcessor<DATA, TIMESERIES extends TimeSeries<DATA[], TIMESERIES>> extends TimeSeriesProcessor<DATA[], TIMESERIES>{
+public interface SynchronisedTimeSeriesCollectionAggregator<
+	TIMESERIES extends TimeSeries<?,?,TIMESERIES>, 
+	STSCOLLECTION extends SynchronisedTimeSeriesCollection<?,?,?,TIMESERIES>,
+	OUTPUT
+> extends TimeSeriesCollectionAggregator<
+	TIMESERIES, 
+	STSCOLLECTION, 
+	OUTPUT
+> {
 	/**
-	 * @param series alter this time series in place
+	 * @param series aggregate this collection into the output
+	 * @return an aggregation of the input
 	 */
-	@Override
-	public void process(TIMESERIES series);
+	public OUTPUT aggregate(STSCOLLECTION series);
 }

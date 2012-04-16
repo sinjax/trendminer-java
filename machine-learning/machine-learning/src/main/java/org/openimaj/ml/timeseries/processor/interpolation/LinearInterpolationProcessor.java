@@ -27,9 +27,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.openimaj.ml.timeseries.interpolation;
+package org.openimaj.ml.timeseries.processor.interpolation;
 
-import org.openimaj.ml.timeseries.interpolation.util.TimeSpanUtils;
+import org.openimaj.ml.timeseries.processor.interpolation.util.TimeSpanUtils;
 import org.openimaj.ml.timeseries.series.DoubleTimeSeries;
 
 /**
@@ -42,7 +42,7 @@ import org.openimaj.ml.timeseries.series.DoubleTimeSeries;
  * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
  *
  */
-public class LinearTimeSeriesInterpolation extends TimeSeriesInterpolation{
+public class LinearInterpolationProcessor extends TimeSeriesInterpolation{
 	
 	
 	
@@ -50,14 +50,14 @@ public class LinearTimeSeriesInterpolation extends TimeSeriesInterpolation{
 	 * @see TimeSeriesInterpolation#TimeSeriesInterpolation(long[])
 	 * @param times
 	 */
-	public LinearTimeSeriesInterpolation(long[] times) {
+	public LinearInterpolationProcessor(long[] times) {
 		super(times);
 	}
 
 	/**
 	 * @see TimeSeriesInterpolation#TimeSeriesInterpolation()
 	 */
-	public LinearTimeSeriesInterpolation() {
+	public LinearInterpolationProcessor() {
 		super();
 	}
 
@@ -68,7 +68,7 @@ public class LinearTimeSeriesInterpolation extends TimeSeriesInterpolation{
 	 * @param steps
 	 * @param delta
 	 */
-	public LinearTimeSeriesInterpolation(long begin, int steps, long delta) {
+	public LinearInterpolationProcessor(long begin, int steps, long delta) {
 		super(begin, steps, delta);
 	}
 
@@ -77,7 +77,7 @@ public class LinearTimeSeriesInterpolation extends TimeSeriesInterpolation{
 	 * @param end
 	 * @param steps
 	 */
-	public LinearTimeSeriesInterpolation(long begin, long end, int steps) {
+	public LinearInterpolationProcessor(long begin, long end, int steps) {
 		super(begin, end, steps);
 	}
 
@@ -86,7 +86,7 @@ public class LinearTimeSeriesInterpolation extends TimeSeriesInterpolation{
 	 * @param end
 	 * @param delta
 	 */
-	public LinearTimeSeriesInterpolation(long begin, long end, long delta) {
+	public LinearInterpolationProcessor(long begin, long end, long delta) {
 		super(begin, end, delta);
 	}
 

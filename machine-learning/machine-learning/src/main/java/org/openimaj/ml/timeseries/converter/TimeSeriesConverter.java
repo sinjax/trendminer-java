@@ -27,20 +27,38 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.openimaj.ml.timeseries.interpolation;
+package org.openimaj.ml.timeseries.converter;
 
 import org.openimaj.ml.timeseries.TimeSeries;
+import org.openimaj.ml.timeseries.processor.TimeSeriesProcessor;
 
 /**
- * A time series processor alters a type of {@link TimeSeries} in place.
  * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
- *
- * @param <DATA>
- * @param <TIMESERIES>
+ * 
+ * A time series converter goes from one type of {@link TimeSeries} to another given a processor.
+ * 
+ * @param <INPUTALL> The input all data type
+ * @param <INPUTSINGLE> the input single data type
+ * @param <INPUTTS> the input time series
+ * @param <OUTPUTALL> the output all data type
+ * @param <OUTPUTSINGLE> the output single data type
+ * @param <OUTPUTTS> the output time series type
  */
-public interface TimeSeriesProcessor<DATA, TIMESERIES extends TimeSeries<DATA, TIMESERIES>> {
+public interface TimeSeriesConverter<
+	INPUTALL,INPUTSINGLE,INPUTTS extends TimeSeries<INPUTALL,INPUTSINGLE,INPUTTS>,
+	OUTPUTALL,OUTPUTSINGLE,OUTPUTTS extends TimeSeries<OUTPUTALL,OUTPUTSINGLE,OUTPUTTS>
+> {
 	/**
-	 * @param series alter this time series in place
+	 * @param series convert the series
+	 * @return the converted series
 	 */
-	public void process(TIMESERIES series);
+	public OUTPUTTS convert(INPUTTS series);
+	
+	/**
+	 * convert and process a time series
+	 * @param series the input series
+	 * @param processor the processor to alter the converted input
+	 * @return the processed converted input
+	 */
+	public OUTPUTTS convert(INPUTTS series, TimeSeriesProcessor<OUTPUTALL, OUTPUTSINGLE, OUTPUTTS> processor);
 }

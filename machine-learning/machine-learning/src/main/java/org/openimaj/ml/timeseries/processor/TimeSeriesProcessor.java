@@ -27,44 +27,20 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.openimaj.ml.timeseries.interpolation.util;
+package org.openimaj.ml.timeseries.processor;
 
-public class TimeSpanUtils {
+import org.openimaj.ml.timeseries.TimeSeries;
+
+/**
+ * A time series processor alters a type of {@link TimeSeries} in place.
+ * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @param <ALLDATA> The type of the data as a collection
+ * @param <SINGLEDATA> the type of an individual unit of data
+ * @param <TIMESERIES> the time series returned by the various {@link TimeSeries#get(long)} functions
+ */
+public interface TimeSeriesProcessor<ALLDATA,SINGLEDATA, TIMESERIES extends TimeSeries<ALLDATA,SINGLEDATA, TIMESERIES>> {
 	/**
-	 * Get
-	 * @param begin
-	 * @param end
-	 * @param delta
-	 * @return
+	 * @param series alter this time series in place
 	 */
-	public static long[] getTime(long begin, long end, long delta) {
-		long[] times = new long[(int) ((end - begin)/delta) + 1];
-		long val = begin;
-		for (int i = 0; i < times.length; i++) {
-			times[i] = val;
-			val += delta;
-		}
-		return times;
-	}
-	
-	public static long[] getTime(long begin, long end, int splits) {
-		long[] times = new long[splits];
-		long delta = (end - begin) / (splits-1);
-		long val = begin;
-		for (int i = 0; i < times.length; i++) {
-			times[i] = val;
-			val += delta;
-		}
-		return times;
-	}
-	
-	public static long[] getTime(long begin, int steps, long delta){
-		long[] times = new long[steps];
-		long val = begin;
-		for (int i = 0; i < times.length; i++) {
-			times[i] = val;
-			val += delta;
-		}
-		return times;
-	}
+	public void process(TIMESERIES series);
 }
