@@ -29,17 +29,19 @@
  */
 package org.openimaj.tools.twitter.modes.preprocessing;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.openimaj.text.nlp.TweetTokeniser;
-import org.openimaj.twitter.TwitterStatus;
+import org.openimaj.text.nlp.language.LanguageDetector.WeightedLocale;
+import org.openimaj.twitter.USMFStatus;
 
 /**
  * Use the twokeniser to tokenise tweets
  * 
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class TokeniseMode extends TwitterPreprocessingMode<Map<String,List<String>>> {
@@ -48,17 +50,35 @@ public class TokeniseMode extends TwitterPreprocessingMode<Map<String,List<Strin
 	public static final String TOKENS_UNPROTECTED = "unprotected";
 	public static final String TOKENS_PROTECTED = "protected";
 	public static final String TOKENS_ALL = "all";
+	private LanguageDetectionMode langMode;
 	
 	/**
 	 * literally do nothing
+	 * @throws IOException 
 	 */
-	public TokeniseMode() {}
+	public TokeniseMode()  {
+		try {
+			langMode = new LanguageDetectionMode();
+		} catch (IOException e) {
+			// The langauge detector was not instantiated, tokens will be of lower quality!
+		}
+	}
 
 	@Override
-	public Map<String,List<String>> process(TwitterStatus twitterStatus)  {
+	public Map<String,List<String>> process(USMFStatus twitterStatus)  {
 		TweetTokeniser tokeniser;
 		Map<String,List<String>> tokens = new HashMap<String,List<String>>();
+		twitterStatus.addAnalysis(TOKENS,tokens);
 		try {
+			if(langMode!=null){
+				Map<String,Object> localeMap = TwitterPreprocessingMode.results(twitterStatus,langMode);
+				WeightedLocale locale = WeightedLocale.fromMap(localeMap);
+				if(!TweetTokeniser.isValid(locale.language)) {
+					return tokens;
+				}
+				
+			}
+			
 			tokeniser = new TweetTokeniser(twitterStatus.text);
 			tokens.put(TOKENS_ALL, tokeniser.getStringTokens());
 			tokens.put(TOKENS_PROTECTED, tokeniser.getProtectedStringTokens());
@@ -66,8 +86,9 @@ public class TokeniseMode extends TwitterPreprocessingMode<Map<String,List<Strin
 			twitterStatus.addAnalysis(TOKENS,tokens);
 		} catch (Exception e) {
 		}	
-		twitterStatus.addAnalysis(TOKENS,tokens);
+		
 		return tokens;
+		
 	}
 	
 	@Override

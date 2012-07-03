@@ -29,6 +29,7 @@
  */
 package org.openimaj.tools.twitter;
 
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
@@ -40,18 +41,23 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.openimaj.data.RandomData;
 import org.openimaj.io.FileUtils;
+import org.openimaj.text.nlp.TweetTokeniser;
 import org.openimaj.tools.twitter.modes.preprocessing.LanguageDetectionMode;
 import org.openimaj.tools.twitter.modes.preprocessing.StemmingMode;
 import org.openimaj.tools.twitter.modes.preprocessing.TokeniseMode;
 import org.openimaj.tools.twitter.modes.preprocessing.TwitterPreprocessingMode;
 import org.openimaj.tools.twitter.options.TwitterPreprocessingToolOptions;
-import org.openimaj.twitter.TwitterStatus;
+import org.openimaj.twitter.USMFStatus;
 import org.openimaj.twitter.collection.FileTwitterStatusList;
 import org.openimaj.twitter.collection.MemoryTwitterStatusList;
 import org.openimaj.twitter.collection.TwitterStatusList;
@@ -59,7 +65,7 @@ import org.openimaj.twitter.collection.TwitterStatusList;
 /**
  * Test the command line twitter preprocessing tool
  * 
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class TwitterPreprocessingToolTests {
@@ -67,24 +73,33 @@ public class TwitterPreprocessingToolTests {
 	public TemporaryFolder folder = new TemporaryFolder();
 	
 	private static final String JSON_TWITTER = "/org/openimaj/twitter/json_tweets.txt";
+	private static final String GEO_JSON_TWITTER = "/org/openimaj/twitter/geo-sample.json";
 	private static final String JSON_TWITTER_UTF = "/org/openimaj/twitter/json_tweets_utf.txt";
 	private static final String RAW_TWITTER = "/org/openimaj/twitter/tweets.txt";
 	private static final String RAW_FEWER_TWITTER = "/org/openimaj/twitter/tweets_fewer.txt";
 	private static final String BROKEN_RAW_TWITTER = "/org/openimaj/twitter/broken_raw_tweets.txt";
+	private static final String MONTH_LONG_TWITTER = "/org/openimaj/twitter/sample-2010-10.json";
+	
 	private File jsonTwitterInputFile;
 	private File jsonTwitterUTFInputFile;
 	private File rawTwitterInputFile;
 	private String commandFormat;
 	private File brokenRawTwitterInputFile;
 	private File rawFewerTwitterInputFile;
+
+	private File jsonGeoTwitterInputFile;
+
+	private File monthLongTwitterInputFile;
 	
 	@Before
 	public void setup() throws IOException{
 		jsonTwitterInputFile = fileFromStream(TwitterPreprocessingToolTests.class.getResourceAsStream(JSON_TWITTER));
+		jsonGeoTwitterInputFile = fileFromStream(TwitterPreprocessingToolTests.class.getResourceAsStream(GEO_JSON_TWITTER));
 		jsonTwitterUTFInputFile = fileFromStream(TwitterPreprocessingToolTests.class.getResourceAsStream(JSON_TWITTER_UTF));
 		rawTwitterInputFile = fileFromStream(TwitterPreprocessingToolTests.class.getResourceAsStream(RAW_TWITTER));
 		rawFewerTwitterInputFile = fileFromStream(TwitterPreprocessingToolTests.class.getResourceAsStream(RAW_FEWER_TWITTER));
 		brokenRawTwitterInputFile = fileFromStream(TwitterPreprocessingToolTests.class.getResourceAsStream(BROKEN_RAW_TWITTER));
+		monthLongTwitterInputFile = fileFromStream(TwitterPreprocessingToolTests.class.getResourceAsStream(MONTH_LONG_TWITTER));
 		
 		commandFormat = "-i %s -o %s -m %s -om %s -rm -q";
 	}
@@ -115,6 +130,37 @@ public class TwitterPreprocessingToolTests {
 		TwitterPreprocessingTool.main(commandArgsArr);
 		TokeniseMode m = new TokeniseMode();
 		assertTrue(checkSameAnalysis(jsonTwitterInputFile,tokenOutJSON,m));
+		tokenOutJSON.delete();
+	}
+	
+	/**
+	 * Tokenise using json input
+	 * @throws Exception 
+	 */
+	@Test
+	public void testInvalidLanguageTokeniseJSON() throws Exception{
+		String tokMode = "TOKENISE";
+		File tokenOutJSON = folder.newFile("tokens-testTweetTokeniseJSON.json");
+		String commandArgs = String.format(commandFormat,jsonTwitterInputFile,tokenOutJSON,tokMode,"APPEND");
+		commandArgs += " -m LANG_ID";
+		String[] commandArgsArr = commandArgs.split(" ");
+		TwitterPreprocessingTool.main(commandArgsArr);
+		TwitterStatusList<USMFStatus>  toktweets = FileTwitterStatusList.read(tokenOutJSON,"UTF-8");
+		LanguageDetectionMode langDet = new LanguageDetectionMode();
+		TokeniseMode tokModeInst = new TokeniseMode();
+		for (USMFStatus twitterStatus : toktweets) {
+			Map<String, Object> a = LanguageDetectionMode.results(twitterStatus, langDet);
+			boolean validLanguage = TweetTokeniser.isValid((String) a.get("language"));
+			Map<String, List<String>> tokens = TokeniseMode.results(twitterStatus, tokModeInst);
+			boolean containsTokens = tokens.size() != 0;
+			boolean valid = (containsTokens && validLanguage) || (!containsTokens && !validLanguage) ; 
+			if(!valid ){
+				System.out.println("Language was: " + a.get("language"));
+				System.out.println("Tokens were: " + tokens);
+			}
+			assertTrue(valid );
+			
+		}
 		tokenOutJSON.delete();
 	}
 	
@@ -167,6 +213,8 @@ public class TwitterPreprocessingToolTests {
 		tokenOutRAW.delete();
 	}
 	
+	
+	
 	/**
 	 * Tokenise using some more difficult raw text
 	 * 
@@ -203,6 +251,110 @@ public class TwitterPreprocessingToolTests {
 		StemmingMode m = new StemmingMode();
 		assertTrue(checkSameAnalysis(rawFewerTwitterInputFile,stemOutRAW,m));
 		stemOutRAW.delete();
+	}
+	/**
+	 * Stem using some more difficult raw text
+	 * 
+	 * @throws IOException
+	 */
+	@Test
+	public void testTweetTokJSONGEO() throws IOException{
+		String stemMode = "TOKENISE";
+		File stemOutRAW = folder.newFile("stem-testTweetStemJSON.json");
+		String commandArgs = String.format(commandFormat,jsonGeoTwitterInputFile,stemOutRAW,stemMode,"APPEND");
+		commandArgs += " -prf GEO";
+		String[] commandArgsArr = commandArgs.split(" ");
+		System.out.println("Stemming");
+		TwitterPreprocessingTool.main(commandArgsArr);
+		FileTwitterStatusList<USMFStatus> fl = FileTwitterStatusList.read(stemOutRAW,"UTF-8");
+		for (USMFStatus twitterStatus : fl) {
+			System.out.println(twitterStatus.text);
+		}
+		System.out.println(fl.size());
+	}
+	
+	/**
+	 * Stem using some more difficult raw text
+	 * 
+	 * @throws IOException
+	 */
+	@Test
+	public void testTweetTokJSONRANDOM() throws IOException{
+		String stemMode = "TOKENISE";
+		File stemOutRAW = folder.newFile("stem-testTweetStemJSON.json");
+		String commandArgs = String.format(commandFormat,jsonGeoTwitterInputFile,stemOutRAW,stemMode,"APPEND");
+		commandArgs += " -prf RANDOM -rfc 0.1";
+		String[] commandArgsArr = commandArgs.split(" ");
+		System.out.println("Stemming");
+		TwitterPreprocessingTool.main(commandArgsArr);
+		
+		FileTwitterStatusList<USMFStatus> fl = FileTwitterStatusList.read(jsonGeoTwitterInputFile,"UTF-8");
+		System.out.println(fl.size());
+		FileTwitterStatusList<USMFStatus> flrnd = FileTwitterStatusList.read(stemOutRAW,"UTF-8");
+		System.out.println(flrnd.size());
+	}
+	
+	/**
+	 * Stem using some more difficult raw text
+	 * 
+	 * @throws IOException
+	 */
+	@Test
+	public void testTweetTokJSONDate() throws IOException{
+		String stemMode = "TOKENISE";
+		File stemOutRAW = folder.newFile("stem-testTweetStemJSON.json");
+		String commandArgs = String.format(commandFormat,monthLongTwitterInputFile,stemOutRAW,stemMode,"APPEND");
+		commandArgs += " -prf DATE -from 2010/09/01 -to 2010/11/30";
+		String[] commandArgsArr = commandArgs.split(" ");
+		System.out.println("Date Filtering");
+		TwitterPreprocessingTool.main(commandArgsArr);
+		
+		FileTwitterStatusList<USMFStatus> fl = FileTwitterStatusList.read(monthLongTwitterInputFile,"UTF-8");
+		System.out.println(fl.size());
+		FileTwitterStatusList<USMFStatus> fldate = FileTwitterStatusList.read(stemOutRAW,"UTF-8");
+		System.out.println(fldate.size());
+	}
+	
+	/**
+	 * Stem using some more difficult raw text
+	 * 
+	 * @throws IOException
+	 */
+	@Test
+	public void testTweetTokJSONDateRange() throws IOException{
+		String stemMode = "TOKENISE";
+		File stemOutRAW = folder.newFile("stem-testTweetStemJSON.json");
+		String commandArgs = String.format(commandFormat,monthLongTwitterInputFile,stemOutRAW,stemMode,"APPEND");
+		commandArgs += " -prf DATE -drng 2010/09/01,2010/11/30";
+		String[] commandArgsArr = commandArgs.split(" ");
+		System.out.println("Date Filtering");
+		TwitterPreprocessingTool.main(commandArgsArr);
+		
+		FileTwitterStatusList<USMFStatus> fl = FileTwitterStatusList.read(monthLongTwitterInputFile,"UTF-8");
+		System.out.println(fl.size());
+		FileTwitterStatusList<USMFStatus> fldate = FileTwitterStatusList.read(stemOutRAW,"UTF-8");
+		System.out.println(fldate.size());
+	}
+	
+	/**
+	 * Stem using some more difficult raw text
+	 * 
+	 * @throws IOException
+	 */
+	@Test
+	public void testTweetTokGrep() throws IOException{
+		String stemMode = "TOKENISE";
+		File stemOutRAW = folder.newFile("stem-testTweetStemJSON.json");
+		String commandArgs = String.format(commandFormat,monthLongTwitterInputFile,stemOutRAW,stemMode,"APPEND");
+		commandArgs += " -prf GREP -r [mM][uU][sS][iI][cC]";
+		String[] commandArgsArr = commandArgs.split(" ");
+		System.out.println("Date Filtering");
+		TwitterPreprocessingTool.main(commandArgsArr);
+		
+		FileTwitterStatusList<USMFStatus> fl = FileTwitterStatusList.read(monthLongTwitterInputFile,"UTF-8");
+		System.out.println(fl.size());
+		FileTwitterStatusList<USMFStatus> fldate = FileTwitterStatusList.read(stemOutRAW,"UTF-8");
+		System.out.println(fldate.size());
 	}
 	
 	@Test
@@ -265,16 +417,16 @@ public class TwitterPreprocessingToolTests {
 	}
 	
 	boolean checkSameAnalysis(File unanalysed,File analysed, TwitterPreprocessingMode<?> m) throws IOException {
-		TwitterStatusList<TwitterStatus>  unanalysedTweetsF = FileTwitterStatusList.read(unanalysed,"UTF-8");
-		TwitterStatusList<TwitterStatus>  analysedTweetsF = FileTwitterStatusList.read(analysed,"UTF-8");
+		TwitterStatusList<USMFStatus>  unanalysedTweetsF = FileTwitterStatusList.read(unanalysed,"UTF-8");
+		TwitterStatusList<USMFStatus>  analysedTweetsF = FileTwitterStatusList.read(analysed,"UTF-8");
 		
-		MemoryTwitterStatusList<TwitterStatus> unanalysedTweets = new MemoryTwitterStatusList<TwitterStatus>();
-		for (TwitterStatus twitterStatus : unanalysedTweetsF) {
+		MemoryTwitterStatusList<USMFStatus> unanalysedTweets = new MemoryTwitterStatusList<USMFStatus>();
+		for (USMFStatus twitterStatus : unanalysedTweetsF) {
 			if(twitterStatus.isInvalid()) continue;
 			unanalysedTweets.add(twitterStatus);
 		}
-		MemoryTwitterStatusList<TwitterStatus> analysedTweets = new MemoryTwitterStatusList<TwitterStatus>();
-		for (TwitterStatus twitterStatus : analysedTweetsF) {
+		MemoryTwitterStatusList<USMFStatus> analysedTweets = new MemoryTwitterStatusList<USMFStatus>();
+		for (USMFStatus twitterStatus : analysedTweetsF) {
 			if(twitterStatus.isInvalid()) continue;
 			analysedTweets.add(twitterStatus);
 		}
@@ -298,9 +450,9 @@ public class TwitterPreprocessingToolTests {
 			
 			if(i % (steps) == 0) System.out.format("...%d ",i);
 			int index = toTest[i];
-			TwitterStatus nowAnalysed = unanalysedTweets.get(index);
+			USMFStatus nowAnalysed = unanalysedTweets.get(index);
 			m.process(nowAnalysed);
-			TwitterStatus analysedTweet = analysedTweets.get(index);
+			USMFStatus analysedTweet = analysedTweets.get(index);
 			if(!nowAnalysed.equals(analysedTweet)) 
 				return false;
 		}

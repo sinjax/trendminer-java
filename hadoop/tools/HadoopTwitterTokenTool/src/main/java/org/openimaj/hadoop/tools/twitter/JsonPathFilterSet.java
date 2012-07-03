@@ -4,24 +4,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 import static org.hamcrest.Matchers.*;
 
 import org.openimaj.util.pair.IndependentPair;
 
-import com.jayway.jsonassert.JsonAssert;
 import com.jayway.jsonassert.JsonAsserter;
-import com.jayway.jsonassert.impl.JsonAsserterImpl;
-
 import static com.jayway.jsonassert.JsonAssert.*;
-import static org.openimaj.hadoop.tools.twitter.NotEmptyCollection.*;
-import com.jayway.jsonpath.JsonPath;
 
 /**
  * Given a collection of JSONpath, treat each path as a filter and return true if
  * a given json input matches every filter
  * 
- * @author ss
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class JsonPathFilterSet {

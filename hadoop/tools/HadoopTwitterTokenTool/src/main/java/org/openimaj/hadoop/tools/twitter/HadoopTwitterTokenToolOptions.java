@@ -29,9 +29,12 @@
  */
 package org.openimaj.hadoop.tools.twitter;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.util.ToolRunner;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -43,12 +46,17 @@ import org.openimaj.hadoop.tools.twitter.token.mode.TwitterTokenMode;
 import org.openimaj.hadoop.tools.twitter.token.mode.TwitterTokenModeOption;
 import org.openimaj.hadoop.tools.twitter.token.outputmode.TwitterTokenOutputMode;
 import org.openimaj.hadoop.tools.twitter.token.outputmode.TwitterTokenOutputModeOption;
+import org.openimaj.io.IOUtils;
 import org.openimaj.tools.InOutToolOptions;
+import org.openimaj.twitter.GeneralJSONTwitter;
+import org.openimaj.twitter.USMFStatus;
+
+import com.jayway.jsonpath.JsonPath;
 
 /**
  * Hadoop specific options for twitter preprocessing
  * 
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class HadoopTwitterTokenToolOptions extends InOutToolOptions{
@@ -68,10 +76,6 @@ public class HadoopTwitterTokenToolOptions extends InOutToolOptions{
 	List<String> jsonPathFilters;
 	private JsonPathFilterSet filters;
 	
-	
-	@Option(name="--time-delta", aliases="-t", required=false, usage="The length of a time window in minutes (defaults to 1 hour (60))", metaVar="STRING")
-	private long timeDelta = 60;
-	
 	@Option(name="--preprocessing-tool", aliases="-pp", required=false, usage="Launch an initial stage where the preprocessing tool is used. The input and output values may be ignored", metaVar="STRING")
 	private String preprocessingOptions = null;
 
@@ -80,7 +84,13 @@ public class HadoopTwitterTokenToolOptions extends InOutToolOptions{
 	private boolean  beforeMaps;
 
 	private String[] originalArgs;
-
+	private JsonPath jsonPath;
+	
+	
+	/**
+	 * The key in which command line arguments are held for each mapper to read the options instance
+	 */
+	public static final String ARGS_KEY = "TOKEN_ARGS";
 	
 	
 	/**
@@ -146,6 +156,7 @@ public class HadoopTwitterTokenToolOptions extends InOutToolOptions{
 			if(!noOutput())
 				HadoopToolsUtil.validateOutput(this);
 		}
+		jsonPath = JsonPath.compile(getJsonPath());
 	}
 
 	/**
@@ -159,12 +170,12 @@ public class HadoopTwitterTokenToolOptions extends InOutToolOptions{
 			);
 	}
 
-	/**
-	 * @return the delta between time windows in minutes
-	 */
-	public long getTimeDelta() {
-		return this.timeDelta;
-	}
+//	/**
+//	 * @return the delta between time windows in minutes
+//	 */
+//	public long getTimeDelta() {
+//		return this.timeDelta;
+//	}
 
 	/**
 	 * @return the JSONPath query used to extract tokens
@@ -222,9 +233,11 @@ public class HadoopTwitterTokenToolOptions extends InOutToolOptions{
 				inputPart = "-i " + this.getInput();
 			}
 			this.preprocessingOptions = inputPart + " -o " + output + " " + preprocessingOptions;
+			String[] hadoopArgs = Arrays.copyOf(this.originalArgs, this.originalArgs.length - this.args.length);
 			if(this.isForce())
 				this.preprocessingOptions  += " -rm";
 			String[] preprocessingArgs = this.preprocessingOptions.split(" ");
+			preprocessingArgs = (String[]) ArrayUtils.addAll(hadoopArgs, preprocessingArgs);
 			ToolRunner.run(new HadoopTwitterPreprocessingTool(), preprocessingArgs);
 		}
 		else{
@@ -240,5 +253,35 @@ public class HadoopTwitterTokenToolOptions extends InOutToolOptions{
 			this.filters = new JsonPathFilterSet(jsonPathFilters);
 		}
 		return this.filters;
+	}
+	
+	public USMFStatus readStatus(String svalue) throws IOException{
+		USMFStatus status = IOUtils.read(new StringReader(svalue), new USMFStatus(GeneralJSONTwitter.class));
+//		TwitterStatus status = TwitterStatus.fromString(svalue);
+		if(status.isInvalid()) throw new IOException("Invalid tweet");
+		return status;
+	}
+	
+	/**
+	 * Read json from text and try to extract the part to the type required
+	 * @param <T>
+	 * @param svalue
+	 * @return a part of type T
+	 * @throws IOException 
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> T readStatusPart(String svalue) throws IOException {
+		
+		if(this.filters!=null && !this.filters.filter(svalue)) return null;
+		Object tokens = this.jsonPath.read(svalue);
+		if(tokens == null) {
+			return null;
+		}
+		try{			
+			return (T) tokens;
+		}
+		catch(Throwable e){
+			throw new IOException("Couldn't cast to type");
+		}
 	}
 }

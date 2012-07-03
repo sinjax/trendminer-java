@@ -30,7 +30,6 @@
 package org.openimaj.ml.timeseries.series;
 
 import java.lang.reflect.Array;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -50,7 +49,7 @@ import org.openimaj.util.reflection.ReflectionUtils;
  * A generic though inefficient time series which can be used by any data type. This implementation
  * is backed by a treemap. Array construction is handled using {@link ReflectionUtils#getTypeArguments(Class, Class)}. To
  * use this class simple define a new class 
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  * @param <DATA>
  * @param <TS> 
@@ -96,7 +95,7 @@ public abstract class ConcreteTimeSeries<DATA,TS extends ConcreteTimeSeries<DATA
 		Iterator<DATA> dataIter = dataList.iterator();
 		Iterator<Long> timeIter = timeList.iterator();
 		for (; dataIter.hasNext();) {
-			instance.timeSeries.put(timeIter.next(), dataIter.next());
+			((ConcreteTimeSeries<DATA,TS>)instance).timeSeries.put(timeIter.next(), dataIter.next());
 		}
 		return instance;
 	}
@@ -111,7 +110,7 @@ public abstract class ConcreteTimeSeries<DATA,TS extends ConcreteTimeSeries<DATA
 		addBefore(timeList,dataList , time, nbefore);
 		addCurrent(timeList,dataList , time);
 		addAfter(timeList,dataList , time, nafter);
-		output.set(timeList, dataList);
+		((ConcreteTimeSeries<DATA,TS>)output).set(timeList, dataList);
 		return output;
 	}
 

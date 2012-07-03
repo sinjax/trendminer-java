@@ -29,13 +29,10 @@
  */
 package org.openimaj.hadoop.mapreduce.stage.helper;
 
-import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.openimaj.hadoop.mapreduce.stage.Stage;
 
 /**
  * A helper class for a common stage type. In this case, a stage that goes from a sequence file to a sequence file with types 
- * @author ss
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  * @param <INPUT_KEY> The key format of the input to the map task 
  * @param <INPUT_VALUE> The value format of the input to the map task
  * @param <OUTPUT_KEY> The key format of the output of the reduce task
@@ -45,9 +42,7 @@ import org.openimaj.hadoop.mapreduce.stage.Stage;
 public abstract class SimpleSequenceFileTextStage<
 			INPUT_KEY, INPUT_VALUE,
 			OUTPUT_KEY, OUTPUT_VALUE
-		> extends Stage<
-			SequenceFileInputFormat<INPUT_KEY, INPUT_VALUE>,
-			TextOutputFormat<OUTPUT_KEY, OUTPUT_VALUE>,
+		> extends SequenceFileTextStage<
 			INPUT_KEY, INPUT_VALUE,
 			OUTPUT_KEY, OUTPUT_VALUE,
 			OUTPUT_KEY, OUTPUT_VALUE>{

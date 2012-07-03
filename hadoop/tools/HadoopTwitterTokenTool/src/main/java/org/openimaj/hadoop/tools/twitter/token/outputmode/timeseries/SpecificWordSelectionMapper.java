@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -18,7 +17,7 @@ import org.openimaj.io.wrappers.ReadableListBinary;
 
 /**
  * given a list of configured words, emits only those words
- * @author ss
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class SpecificWordSelectionMapper extends Mapper<Text, BytesWritable, Text, BytesWritable> {

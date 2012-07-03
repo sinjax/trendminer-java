@@ -33,12 +33,12 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.openimaj.text.nlp.language.LanguageDetector;
-import org.openimaj.twitter.TwitterStatus;
+import org.openimaj.twitter.USMFStatus;
 
 /**
  * A gateway class which loads and uses the #LanguageDetector
  * 
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class LanguageDetectionMode extends TwitterPreprocessingMode<Map<String,Object>> {
@@ -55,7 +55,7 @@ public class LanguageDetectionMode extends TwitterPreprocessingMode<Map<String,O
 	}
 
 	@Override
-	public Map<String,Object> process(TwitterStatus twitterStatus) {
+	public Map<String,Object> process(USMFStatus twitterStatus) {
 		Map<String,Object> language = null;
 		try {
 			language = detector.classify(twitterStatus.text).asMap();

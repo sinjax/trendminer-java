@@ -58,7 +58,7 @@ import com.google.gson.GsonBuilder;
 
 /**
  * Short text language detection ported from langid: https://github.com/saffsd/langid.py
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 @SuppressWarnings("unused")
@@ -129,7 +129,7 @@ public class LanguageDetector {
 	/**
 	 * 
 	 * A langauge with an associated confidence 
-	 * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+	 * @author Sina Samangooei (ss@ecs.soton.ac.uk)
 	 *
 	 */
 	public static class WeightedLocale{
@@ -270,7 +270,14 @@ public class LanguageDetector {
 	}
 
 	public LanguageModel getLanguageModel() {
-		return this.languageModel;
-		
+		return this.languageModel;		
+	}
+	
+	public static void main(String[] args) throws IOException {
+		LanguageDetector lm = new LanguageDetector();
+		System.out.println("Available languages: ");
+		for (String string : lm.languageModel.naiveBayesClasses) {
+			System.out.println(string + ": " + new Locale(string).getDisplayLanguage());
+		}
 	}
 }

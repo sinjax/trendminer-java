@@ -42,7 +42,7 @@ import org.openimaj.tools.twitter.options.AbstractTwitterPreprocessingToolOption
 /**
  * Hadoop specific options for twitter preprocessing
  * 
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class HadoopTwitterPreprocessingToolOptions extends AbstractTwitterPreprocessingToolOptions {
@@ -65,7 +65,7 @@ public class HadoopTwitterPreprocessingToolOptions extends AbstractTwitterPrepro
 	 * @throws CmdLineException
 	 */
 	public HadoopTwitterPreprocessingToolOptions(String[] args,boolean beforeMaps) throws CmdLineException {
-		super(args);
+		super(args,false); // don't prepare using the superclass
 		this.beforeMaps = beforeMaps;
 	}
 

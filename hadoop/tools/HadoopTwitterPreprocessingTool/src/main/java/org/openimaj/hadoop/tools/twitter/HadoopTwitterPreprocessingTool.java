@@ -41,13 +41,14 @@ import org.kohsuke.args4j.CmdLineException;
 import org.openimaj.hadoop.mapreduce.StageRunner;
 import org.openimaj.hadoop.mapreduce.stage.Stage;
 import org.openimaj.hadoop.mapreduce.stage.helper.TextStage;
+import org.openimaj.hadoop.tools.HadoopToolsUtil;
 
 
 
 /**
  * A hadoop implementation of twitter preprocessing
  * 
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class HadoopTwitterPreprocessingTool extends StageRunner {
@@ -70,35 +71,15 @@ public class HadoopTwitterPreprocessingTool extends StageRunner {
 				
 				@Override
 				public void setup(Job job) {
-					job.getConfiguration().setStrings(HadoopTwitterPreprocessingTool.ARGS_KEY, args);
+					job.setNumReduceTasks(0);
+					job.getConfiguration().setStrings(HadoopTwitterPreprocessingTool.ARGS_KEY, HadoopToolsUtil.encodeArgs(args));
 				}
 			};
 		}
 		else{
 			return null;
-//			new MultipleOutputLongTextLongTextNullTextStage(){
-//				@Override
-//				public Class<? extends Mapper<LongWritable, Text, LongWritable, Text>> mapper() {
-//					return DateTwitterPreprocessingMapper.class;
-//				}
-//				
-//				@Override
-//				public void setup(Job job) {
-//					job.getConfiguration().setStrings(HadoopTwitterPreprocessingTool.ARGS_KEY, args);
-//				}
-//				
-//				public Class<? extends Reducer<LongWritable,Text,NullWritable,Text>> reducer() {
-//					if(options.reducerMode == ReducerModeOption.DAY_SPLIT)
-//						return DaySplitReducer.class;
-//					return super.reducer();
-//				};
-//			};
 		}
 	}
-//	@Override
-//	public Stage stage(){
-
-//	}
 	
 	@Override
 	public Path output() {

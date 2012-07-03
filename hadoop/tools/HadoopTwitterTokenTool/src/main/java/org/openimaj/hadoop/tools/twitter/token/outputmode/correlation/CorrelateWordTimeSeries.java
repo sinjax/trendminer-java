@@ -33,15 +33,14 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.openimaj.hadoop.mapreduce.stage.helper.SequenceFileTextStage;
 import org.openimaj.util.pair.IndependentPair;
 
 /**
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
-public class CorrelateWordTimeSeries extends SequenceFileTextStage<Text, BytesWritable, Text, BytesWritable, NullWritable, Text>{
+public class CorrelateWordTimeSeries extends SequenceFileTextStage<Text, BytesWritable, NullWritable, Text, NullWritable, Text>{
 	/**
 	 * the directory this stage will output
 	 */
@@ -64,7 +63,7 @@ public class CorrelateWordTimeSeries extends SequenceFileTextStage<Text, BytesWr
 		job.getConfiguration().setLong(PERIOD_START, start);
 		job.getConfiguration().setLong(PERIOD_END, end);
 		job.getConfiguration().setStrings(FINANCE_DATA, finance);
-		job.setNumReduceTasks(12);
+		job.setNumReduceTasks(1);
 	};
 	
 	@Override
@@ -73,12 +72,12 @@ public class CorrelateWordTimeSeries extends SequenceFileTextStage<Text, BytesWr
 	}
 	
 	@Override
-	public Class<? extends Mapper<Text, BytesWritable, Text, BytesWritable>> mapper() {
+	public Class<? extends Mapper<Text, BytesWritable, NullWritable, Text>> mapper() {
 		return WordTimeperiodValueMapper.class;
 	}
 	
-	@Override
-	public Class<? extends Reducer<Text, BytesWritable, NullWritable, Text>> reducer() {
-		return WordValueCorrelationReducer.class;
-	}
+//	@Override
+//	public Class<? extends Reducer<Text, BytesWritable, NullWritable, Text>> reducer() {
+//		return WordValueCorrelationReducer.class;
+//	}
 }
