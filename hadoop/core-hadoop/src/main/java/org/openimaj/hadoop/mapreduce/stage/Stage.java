@@ -58,7 +58,7 @@ import com.hadoop.mapreduce.LzoTextInputFormat;
  * should be enough. If any further settings need to be configured use the {@link #setup(Job)} which is called before the
  * job is being returned
  * 
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  * @param <INPUT_FORMAT> The job's input format. Must be a {@link FileOutputFormat}. Used to {@link FileInputFormat#setInputPaths(Job, Path...)} with the stage's input locations
  * @param <OUTPUT_FORMAT> The job's output format. Must be a {@link FileOutputFormat}. Used to {@link FileOutputFormat#setOutputPath(Job, Path)} with the stage's output location
  * @param <INPUT_KEY> The key format of the input to the map task 
@@ -140,6 +140,7 @@ public abstract class Stage<
 		setOutputPath(job, output);
 		job.setMapperClass(mapper());
 		job.setReducerClass(reducer());
+		job.setCombinerClass(combiner());
 		setup(job);
 		return job;
 	}
@@ -154,26 +155,36 @@ public abstract class Stage<
 	/**
 	 * Add any final adjustments to the job's config
 	 * @param job
+	 * @throws IOException 
 	 */
-	public void setup(Job job){
+	public void setup(Job job) throws IOException{
 	}
 	
 	/**
-	 * By default this method returns the {@link NullMapper} class. This mapper outputs the values handed
+	 * By default this method returns the {@link IdentityMapper} class. This mapper outputs the values handed
 	 * as they are. 
 	 * @return the class of the mapper to use
 	 */
 	public Class<? extends Mapper<INPUT_KEY,INPUT_VALUE,MAP_OUTPUT_KEY,MAP_OUTPUT_VALUE>> mapper(){
-		NullMapper<INPUT_KEY,INPUT_VALUE,MAP_OUTPUT_KEY,MAP_OUTPUT_VALUE> nr = new NullMapper<INPUT_KEY,INPUT_VALUE,MAP_OUTPUT_KEY,MAP_OUTPUT_VALUE>();
+		IdentityMapper<INPUT_KEY,INPUT_VALUE,MAP_OUTPUT_KEY,MAP_OUTPUT_VALUE> nr = new IdentityMapper<INPUT_KEY,INPUT_VALUE,MAP_OUTPUT_KEY,MAP_OUTPUT_VALUE>();
 		return (Class<? extends Mapper<INPUT_KEY, INPUT_VALUE, MAP_OUTPUT_KEY, MAP_OUTPUT_VALUE>>) nr.getClass();
 	}
 	/**
-	 * By default this method returns the {@link NullReducer} class. This reducer outputs the values handed as they are. 
+	 * By default this method returns the {@link IdentityReducer} class. This reducer outputs the values handed as they are. 
 	 * @return the class of the reducer to use
 	 */
 	public Class<? extends Reducer<MAP_OUTPUT_KEY,MAP_OUTPUT_VALUE,OUTPUT_KEY,OUTPUT_VALUE>> reducer(){
-		NullReducer<MAP_OUTPUT_KEY, MAP_OUTPUT_VALUE, OUTPUT_KEY, OUTPUT_VALUE> nr = new NullReducer<MAP_OUTPUT_KEY,MAP_OUTPUT_VALUE,OUTPUT_KEY,OUTPUT_VALUE>();
+		IdentityReducer<MAP_OUTPUT_KEY, MAP_OUTPUT_VALUE, OUTPUT_KEY, OUTPUT_VALUE> nr = new IdentityReducer<MAP_OUTPUT_KEY,MAP_OUTPUT_VALUE,OUTPUT_KEY,OUTPUT_VALUE>();
 		return (Class<? extends Reducer<MAP_OUTPUT_KEY, MAP_OUTPUT_VALUE, OUTPUT_KEY, OUTPUT_VALUE>>) nr.getClass();
+	}
+	
+	/**
+	 * By default this method returns the {@link IdentityReducer} class. This combiner outputs the values handed as they are. 
+	 * @return the class of the reducer to use
+	 */
+	public Class<? extends Reducer<MAP_OUTPUT_KEY,MAP_OUTPUT_VALUE,MAP_OUTPUT_KEY,MAP_OUTPUT_VALUE>> combiner(){
+		IdentityReducer<MAP_OUTPUT_KEY, MAP_OUTPUT_VALUE, MAP_OUTPUT_KEY,MAP_OUTPUT_VALUE> nr = new IdentityReducer<MAP_OUTPUT_KEY,MAP_OUTPUT_VALUE,MAP_OUTPUT_KEY,MAP_OUTPUT_VALUE>();
+		return (Class<? extends Reducer<MAP_OUTPUT_KEY, MAP_OUTPUT_VALUE, MAP_OUTPUT_KEY,MAP_OUTPUT_VALUE>>) nr.getClass();
 	}
 	
 

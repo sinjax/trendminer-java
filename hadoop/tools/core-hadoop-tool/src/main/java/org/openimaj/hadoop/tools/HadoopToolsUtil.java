@@ -48,7 +48,7 @@ import org.openimaj.tools.InOutToolOptions;
 /**
  * Tools for dealing with #InOutTool instances that are hdfs files
  * 
- * @author Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  */
 public class HadoopToolsUtil {
 
@@ -59,6 +59,7 @@ public class HadoopToolsUtil {
 	 */
 	public static void validateOutput(InOutToolOptions tool) throws CmdLineException {
 		try {
+			if(tool.getOutput() == null) throw new CmdLineException(null,"No Output Specified");
 			URI outuri = SequenceFileUtility.convertToURI(tool.getOutput());
 			FileSystem fs = getFileSystem(outuri);
 			Path p = new Path(outuri.toString());
@@ -136,6 +137,7 @@ public class HadoopToolsUtil {
 		
 		try {
 			FileSystem fs = null ;
+			if(tool.getAllInputs() == null) throw new IOException();
 			for (String input : tool.getAllInputs()) {
 				URI outuri = SequenceFileUtility.convertToURI(input);
 				if(fs == null) fs = getFileSystem(outuri);
@@ -205,10 +207,22 @@ public class HadoopToolsUtil {
 		return SequenceFileUtility.getFilePaths(path, "part");
 	}
 	
+	/**
+	 * @param paths
+	 * @return all the file starting with "part" in the paths requested
+	 * @throws IOException
+	 */
 	public static Path[] getInputPaths(String[] paths) throws IOException {
 		return SequenceFileUtility.getFilePaths(paths, "part");
 	}
 	
+	/**
+	 * All the files starting with "part" in the paths which look like: "paths[i]/subdir
+	 * @param paths
+	 * @param subdir
+	 * @return the paths to the part files
+	 * @throws IOException
+	 */
 	public static Path[] getInputPaths(String[] paths, String subdir) throws IOException {
 		return SequenceFileUtility.getFilePaths(paths, subdir, "part");
 	}
@@ -228,7 +242,8 @@ public class HadoopToolsUtil {
 	/**
 	 * Read a whole hadoop file into a string. This is obviously a ridiculous thing to do for all but the SMALLEST hadoop files
 	 * so be very careful
-	 * @return 
+	 * @param p a path
+	 * @return the content of the path p as a string 
 	 * @throws IOException 
 	 */
 	public static String[] readlines(String p) throws IOException {
@@ -241,6 +256,38 @@ public class HadoopToolsUtil {
 			out.addAll(Arrays.asList(FileUtils.readlines(is)));
 		}
 		return out.toArray(new String[out.size()]);
+	}
+	
+	private static String COMMA_REPLACE = "#COMMA#";
+	
+	/**
+	 * A horrible hack to deal with hadoop's horrible hack when setting arrays of strings as configs
+	 * @param args
+	 * @return horribly replace each "," with #COMMA#
+	 */
+	public static String[] encodeArgs(String[] args) {
+		String[] ret = new String[args.length];
+		int i = 0;
+		for (String arg : args) {
+			ret[i] = arg.replaceAll(",", COMMA_REPLACE);
+			i++;
+		}
+		return ret;
+	}
+	
+	/**
+	 * A horrible hack to deal with hadoop's horrible hack when setting arrays of strings as configs
+	 * @param args
+	 * @return horribly replace each #COMMA# with ","
+	 */
+	public static String[] decodeArgs(String[] args) {
+		String[] ret = new String[args.length];
+		int i = 0;
+		for (String arg : args) {
+			ret[i] = arg.replaceAll(COMMA_REPLACE,",");
+			i++;
+		}
+		return ret;
 	}
 	
 

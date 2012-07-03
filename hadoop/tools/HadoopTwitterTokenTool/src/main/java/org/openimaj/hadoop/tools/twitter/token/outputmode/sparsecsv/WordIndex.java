@@ -37,6 +37,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -60,61 +61,84 @@ import org.openimaj.util.pair.IndependentPair;
 
 import com.Ostermiller.util.CSVParser;
 import com.Ostermiller.util.CSVPrinter;
+import com.jmatio.io.MatFileWriter;
+import com.jmatio.types.MLArray;
+import com.jmatio.types.MLCell;
+import com.jmatio.types.MLChar;
+import com.jmatio.types.MLDouble;
 
 
 public class WordIndex extends StageAppender {
 
 	/**
 	 * Emits each word with the total number of times the word was seen
-	 * @author ss
+	 * @author Sina Samangooei (ss@ecs.soton.ac.uk)
 	 *
 	 */
 	public static class Map extends Mapper<Text,BytesWritable,Text,LongWritable>{
+		private int wordTimeCountThresh;
+
 		public Map() {
 			// TODO Auto-generated constructor stub
 		}
+		
 		@Override
-		public void map(final Text key, BytesWritable value, final Mapper<Text,BytesWritable,Text,LongWritable>.Context context){
+		protected void setup(Mapper<Text,BytesWritable,Text,LongWritable>.Context context) throws IOException ,InterruptedException {
+			this.wordTimeCountThresh = context.getConfiguration().getInt(WORDCOUNT_TIMETHRESH, 0);
+		};
+		
+		@Override
+		public void map(final Text key, BytesWritable value, final Mapper<Text,BytesWritable,Text,LongWritable>.Context context) throws InterruptedException{
 			try {
+				final long[] largest = new long[]{0};
+				final boolean[] anyDayOverLimit = new boolean[]{false};
 				IOUtils.deserialize(value.getBytes(), new ReadableListBinary<Object>(new ArrayList<Object>()){
-					boolean readmore = true;
 					@Override
 					protected Object readValue(DataInput in) throws IOException {
-						if(readmore){
-							WordDFIDF idf = new WordDFIDF();
-							readmore = false;
-							idf.readBinary(in);
-							try {
-								context.write(key, new LongWritable(idf.Twf));
-							} catch (InterruptedException e) {
-								throw new IOException("");
-							}
-							
+						WordDFIDF idf = new WordDFIDF();
+						idf.readBinary(in);
+						if(idf.wf > wordTimeCountThresh){
+							anyDayOverLimit[0] = true;
 						}
+						if(largest[0] < idf.Twf)
+							largest[0] = idf.Twf;
+						
 						return new Object();
 					}
 				});
+				if(anyDayOverLimit[0]) // One of the days was over the day limit
+					context.write(key, new LongWritable(largest[0]));
 				
 			} catch (IOException e) {
 				System.err.println("Couldnt read word: " + key);
 			}
+			
 		}
 	}
 	/**
 	 * Writes each word,count
-	 * @author ss
+	 * @author Sina Samangooei (ss@ecs.soton.ac.uk)
 	 *
 	 */
 	public static class Reduce extends Reducer<Text,LongWritable,LongWritable,Text>{
+		private int wordCountThresh;
+
 		public Reduce() {
 			// TODO Auto-generated constructor stub
 		}
+		
+		@Override
+		protected void setup(Reducer<Text,LongWritable,LongWritable,Text>.Context context) throws IOException ,InterruptedException {
+			this.wordCountThresh = context.getConfiguration().getInt(WORDCOUNT_THRESH, 0);
+		};
+		
 		@Override
 		public void reduce(Text word, Iterable<LongWritable> counts, final Reducer<Text,LongWritable,LongWritable,Text>.Context context) throws IOException, InterruptedException{
 			long countL = 0;
 			for (LongWritable count : counts) {
 				countL += count.get();
 			}
+			if(countL < this.wordCountThresh) return;
 			StringWriter swriter = new StringWriter();
 			CSVPrinter writer = new CSVPrinter(swriter);
 			writer.write(new String[]{word.toString(),countL + ""});
@@ -122,7 +146,27 @@ public class WordIndex extends StageAppender {
 			context.write(new LongWritable(countL), new Text(swriter.toString()));
 		}
 	}
+	protected static final String WORDCOUNT_THRESH = "org.openimaj.hadoop.tools.twitter.token.outputmode.sparsecsv.wordcountthresh";
+	protected static final String WORDCOUNT_TOPN = "org.openimaj.hadoop.tools.twitter.token.outputmode.sparsecsv.wordcounttopn";
+	protected static final String WORDCOUNT_TIMETHRESH = "org.openimaj.hadoop.tools.twitter.token.outputmode.sparsecsv.wordtimecountthresh";
+	private int wordCountThreshold;
+	private int topNWords;
+	private int wordTimeThreshold;
 	
+	public WordIndex(int wordCountThreshold, int topNWords) {
+		this.wordCountThreshold = wordCountThreshold;
+		this.topNWords = topNWords;
+	}
+	
+	public WordIndex(int wordCountThreshold, int wordTimeThreshold, int topNWords) {
+		this.wordCountThreshold = wordCountThreshold;
+		this.topNWords = topNWords;
+		this.wordTimeThreshold = wordTimeThreshold;
+	}
+	public WordIndex() {
+		this.wordCountThreshold = 0;
+		this.topNWords = -1;
+	}
 	/**
 	 * @param path
 	 * @return map of words to counts and index
@@ -164,6 +208,8 @@ public class WordIndex extends StageAppender {
 		SequenceFileStage<Text,BytesWritable, Text, LongWritable, LongWritable,Text> collateWords = new SequenceFileStage<Text,BytesWritable, Text, LongWritable, LongWritable,Text>() {
 			@Override
 			public void setup(Job job) {
+				job.getConfiguration().setInt(WORDCOUNT_THRESH, wordCountThreshold);
+				job.getConfiguration().setInt(WORDCOUNT_TIMETHRESH, wordTimeThreshold);
 				job.setNumReduceTasks(1);
 			}
 			@Override
@@ -184,6 +230,8 @@ public class WordIndex extends StageAppender {
 		SequenceFileTextStage<LongWritable, Text, LongWritable, Text, NullWritable, Text> sortedWords = new SequenceFileTextStage<LongWritable, Text, LongWritable, Text, NullWritable, Text>(){
 			@Override
 			public void setup(Job job) {
+				job.getConfiguration().setInt(WORDCOUNT_TOPN, topNWords);
+				job.setSortComparatorClass(LongWritable.DecreasingComparator.class);
 				job.setNumReduceTasks(1);
 			}
 			
@@ -200,6 +248,41 @@ public class WordIndex extends StageAppender {
 		
 		mjob.queueStage(collateWords);
 		mjob.queueStage(sortedWords);
+	}
+	
+	public static void main(String[] args) throws IOException {
+		LinkedHashMap<String, IndependentPair<Long, Long>> wi = WordIndex.readWordCountLines("/Users/ss/Development/data/trendminer/sheffield/2010/09/tweets.2010-09-01.sparsecsv");
+		System.out.println("Number of words index: " + wi.size());
+		for (Entry<String, IndependentPair<Long, Long>> e : wi.entrySet()) {
+			if(e.getValue() == null){
+				System.out.println(e.getKey() + " was null!");
+			}
+		}
+		System.out.println(wi.get("!"));
+	}
+
+	/**
+	 * Write a CSV wordIndex to a {@link MLCell} writen to a .mat data file
+	 * @param path
+	 * @throws IOException
+	 */
+	public static void writeToMatlab(String path) throws IOException {
+		Path wordMatPath = new Path(path + "/words/wordIndex.mat");
+		FileSystem fs = HadoopToolsUtil.getFileSystem(wordMatPath);
+		LinkedHashMap<String, IndependentPair<Long, Long>> wordIndex = readWordCountLines(path);
+		MLCell wordCell = new MLCell("words",new int[]{wordIndex.size(),2});
+		
+		System.out.println("... reading words");
+		for (Entry<String, IndependentPair<Long, Long>> ent : wordIndex.entrySet()) {
+			String word = ent.getKey();
+			int wordCellIndex = (int)(long)ent.getValue().secondObject();
+			long count = ent.getValue().firstObject();
+			wordCell.set(new MLChar(null, word), wordCellIndex,0);
+			wordCell.set(new MLDouble(null, new double[][]{new double[]{count}}), wordCellIndex,1);
+		}
+		ArrayList<MLArray> list = new ArrayList<MLArray>();
+		list.add(wordCell);
+		new MatFileWriter(fs.create(wordMatPath),list );
 	}
 
 }

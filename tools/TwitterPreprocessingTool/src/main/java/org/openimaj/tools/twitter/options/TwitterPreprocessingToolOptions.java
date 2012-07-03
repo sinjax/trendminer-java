@@ -44,7 +44,7 @@ import java.util.List;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.openimaj.tools.FileToolsUtil;
-import org.openimaj.twitter.TwitterStatus;
+import org.openimaj.twitter.USMFStatus;
 import org.openimaj.twitter.collection.FileTwitterStatusList;
 import org.openimaj.twitter.collection.StreamTwitterStatusList;
 import org.openimaj.twitter.collection.TwitterStatusList;
@@ -52,7 +52,7 @@ import org.openimaj.twitter.collection.TwitterStatusList;
 /**
  * The single processing command line version of the twitter tool
  * 
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class TwitterPreprocessingToolOptions extends  AbstractTwitterPreprocessingToolOptions{
@@ -106,7 +106,7 @@ public class TwitterPreprocessingToolOptions extends  AbstractTwitterPreprocessi
 	 * @return the list of tweets from the input file
 	 * @throws IOException
 	 */
-	public TwitterStatusList<TwitterStatus> getTwitterStatusList() throws IOException {
+	public TwitterStatusList<USMFStatus> getTwitterStatusList() throws IOException {
 		if(this.stdin){
 			this.stdin = false;
 			if(this.nTweets == -1)
@@ -168,6 +168,5 @@ public class TwitterPreprocessingToolOptions extends  AbstractTwitterPreprocessi
 		else
 			TwitterPreprocessingToolOptions.this.inputFile = null;
 		
-	} 
-	
+	}
 }

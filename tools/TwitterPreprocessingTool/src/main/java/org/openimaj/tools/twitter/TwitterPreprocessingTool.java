@@ -36,14 +36,14 @@ import java.util.List;
 import org.openimaj.tools.twitter.modes.output.TwitterOutputMode;
 import org.openimaj.tools.twitter.modes.preprocessing.TwitterPreprocessingMode;
 import org.openimaj.tools.twitter.options.TwitterPreprocessingToolOptions;
-import org.openimaj.twitter.TwitterStatus;
+import org.openimaj.twitter.USMFStatus;
 import org.openimaj.twitter.collection.TwitterStatusList;
 import org.openimaj.utils.threads.WatchedRunner;
 
 /**
  * A tool for applying preprocessing to a set of tweets and outputting the results in json
  * 
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class TwitterPreprocessingTool 
@@ -72,14 +72,14 @@ public class TwitterPreprocessingTool
 		while(options.hasNextFile()){
 			options.nextFile();
 			options.progress("Preparing tweets\n");
-			TwitterStatusList<TwitterStatus> tweets = options.getTwitterStatusList();
+			TwitterStatusList<USMFStatus> tweets = options.getTwitterStatusList();
 			options.progress("Processing " + tweets.size() + " tweets\n");
 			
 			long done = 0;
 			long skipped = 0;
 			long start = System.currentTimeMillis();
 			PrintWriter oWriter = options.outputWriter();
-			for (final TwitterStatus twitterStatus : tweets) {
+			for (final USMFStatus twitterStatus : tweets) {
 				if(twitterStatus.isInvalid()){
 					if(options.veryLoud()){
 						System.out.println("\nTWEET INVALID, skipping.");
@@ -90,6 +90,9 @@ public class TwitterPreprocessingTool
 					System.out.println("\nPROCESSING TWEET");
 					System.out.println(twitterStatus);
 				}
+				
+				if(options.preProcessesSkip(twitterStatus)) continue;
+				
 				WatchedRunner runner = new WatchedRunner(options.getTimeBeforeSkip()){
 					@Override
 					public void doTask() {
@@ -101,11 +104,14 @@ public class TwitterPreprocessingTool
 				runner.go();
 				if(runner.taskCompleted()){
 					done++;
-//					if(done%1000 == 0) 
-						options.progress("\rDone: " + done);
+					options.progress("\rDone: " + done);
 					
-					outputMode.output(twitterStatus,oWriter);
-					oWriter.flush();
+					
+					if(!options.postProcessesSkip(twitterStatus))
+					{
+						outputMode.output(twitterStatus,oWriter);
+						oWriter.flush();
+					}
 				}
 				else{
 					skipped ++;

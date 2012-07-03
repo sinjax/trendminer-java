@@ -29,15 +29,22 @@
  */
 package org.openimaj.twitter.experiments.langid;
 
-import org.openimaj.twitter.TwitterStatus;
+import org.openimaj.twitter.GeneralJSON;
+import org.openimaj.twitter.USMFStatus;
 
 
 /**
  * A twitter status with a true language as ascribed by some users
  * 
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
-public class TrueLanguageTwitterStatus extends TwitterStatus {
+public class TrueLanguageTwitterStatus extends USMFStatus {
+	public TrueLanguageTwitterStatus(
+			Class<? extends GeneralJSON> generalJSONclass) {
+		super(generalJSONclass);
+		// TODO Auto-generated constructor stub
+	}
+
 	public String lang_true;
 }

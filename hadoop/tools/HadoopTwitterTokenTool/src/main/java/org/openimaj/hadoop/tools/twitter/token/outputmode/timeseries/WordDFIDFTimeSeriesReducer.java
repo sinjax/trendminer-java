@@ -1,9 +1,6 @@
 package org.openimaj.hadoop.tools.twitter.token.outputmode.timeseries;
 
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -11,11 +8,10 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.openimaj.hadoop.tools.twitter.utils.WordDFIDF;
 import org.openimaj.hadoop.tools.twitter.utils.WordDFIDFTimeSeries;
 import org.openimaj.io.IOUtils;
-import org.openimaj.ml.timeseries.series.DoubleTimeSeries;
 
 /**
  * Given a stream of wordDFIDF as input, reads each DFIDF, constructs a time series and emits the time series
- * @author ss
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class WordDFIDFTimeSeriesReducer extends Reducer<Text, BytesWritable, NullWritable, Text> {

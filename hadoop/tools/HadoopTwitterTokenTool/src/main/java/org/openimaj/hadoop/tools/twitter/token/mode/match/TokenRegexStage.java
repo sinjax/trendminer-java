@@ -36,13 +36,14 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.openimaj.hadoop.mapreduce.stage.Stage;
 import org.openimaj.hadoop.mapreduce.stage.helper.TextStage;
-import org.openimaj.hadoop.tools.twitter.token.mode.CountTweetsInTimeperiod;
+import org.openimaj.hadoop.tools.twitter.HadoopTwitterTokenToolOptions;
 
 
 /**
  * If tokens in set of terms spit out the whole line, otherwise ignore.
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class TokenRegexStage extends TextStage{
@@ -52,7 +53,7 @@ public class TokenRegexStage extends TextStage{
 	 */
 	public static final String REGEX_KEY = "org.openimaj.hadoop.tools.twitter.token.mode.match.regex";
 	/**
-	 * The output folder name used returned by {@link FileOutputStage#outname()}
+	 * The output folder name used returned by {@link Stage#outname()}
 	 */
 	public static final String OUT_NAME = "tokenmatch";
 
@@ -62,10 +63,11 @@ public class TokenRegexStage extends TextStage{
 	@Override
 	public void setup(Job job) {
 		job.getConfiguration().setStrings(REGEX_KEY, tomatch.toArray(new String[tomatch.size()]));
-		job.getConfiguration().setStrings(CountTweetsInTimeperiod.ARGS_KEY, this.args);
+		job.getConfiguration().setStrings(HadoopTwitterTokenToolOptions.ARGS_KEY, this.args);
 	}
 	/**
 	 * @param rstrings the list of regexes to match
+	 * @param args the arguments sent to the tool
 	 */
 	public TokenRegexStage(List<String> rstrings, String[] args) {
 		this.tomatch = rstrings;

@@ -39,12 +39,13 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile.Reader;
 import org.joda.time.DateTime;
+import org.kohsuke.args4j.Option;
 import org.openimaj.hadoop.mapreduce.MultiStagedJob;
 import org.openimaj.hadoop.tools.HadoopToolsUtil;
 import org.openimaj.hadoop.tools.twitter.HadoopTwitterTokenToolOptions;
-import org.openimaj.hadoop.tools.twitter.token.mode.CountTweetsInTimeperiod;
-import org.openimaj.hadoop.tools.twitter.token.mode.CountWordsAcrossTimeperiod;
 import org.openimaj.hadoop.tools.twitter.token.mode.TwitterTokenMode;
+import org.openimaj.hadoop.tools.twitter.token.mode.dfidf.CountTweetsInTimeperiod;
+import org.openimaj.hadoop.tools.twitter.token.mode.dfidf.CountWordsAcrossTimeperiod;
 import org.openimaj.hadoop.tools.twitter.token.outputmode.TwitterTokenOutputMode;
 import org.openimaj.hadoop.tools.twitter.token.outputmode.sparsecsv.TimeIndex;
 import org.openimaj.io.IOUtils;
@@ -52,7 +53,9 @@ import org.openimaj.twitter.finance.YahooFinanceData;
 import org.openimaj.util.pair.IndependentPair;
 
 public class CorrelationOutputMode extends TwitterTokenOutputMode {
-
+	
+	@Option(name="--max-p-value", aliases="-maxp", required=false, usage="The maximum P-Value")
+	double maxp = -1;
 
 	@Override
 	public void write(HadoopTwitterTokenToolOptions opts,TwitterTokenMode completedMode) throws Exception {
@@ -74,6 +77,7 @@ public class CorrelationOutputMode extends TwitterTokenOutputMode {
 				opts.getArgs()
 		);
 		stages.queueStage(new CorrelateWordTimeSeries(financeOut,startend));
+		stages.queueStage(new CorrelateWordSort(maxp));
 		stages.runAll();
 	}
 

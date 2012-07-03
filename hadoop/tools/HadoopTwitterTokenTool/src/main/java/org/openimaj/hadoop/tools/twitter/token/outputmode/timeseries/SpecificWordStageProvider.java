@@ -3,21 +3,18 @@ package org.openimaj.hadoop.tools.twitter.token.outputmode.timeseries;
 import java.util.List;
 
 import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.openimaj.hadoop.mapreduce.stage.Stage;
 import org.openimaj.hadoop.mapreduce.stage.StageProvider;
-import org.openimaj.hadoop.mapreduce.stage.helper.SequenceFileStage;
 import org.openimaj.hadoop.mapreduce.stage.helper.SequenceFileTextStage;
 
 /**
  * Given a set of specific words, this a mapper is prepared which emits only the dfidf values of those specific words
  * and a reducer is created which emits a serialised time series for each word.
- * @author ss
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class SpecificWordStageProvider extends StageProvider {

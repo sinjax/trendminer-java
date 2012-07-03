@@ -33,14 +33,13 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.kohsuke.args4j.CmdLineException;
-import org.openimaj.hadoop.tools.twitter.token.mode.TwitterTokenMode;
 
 
 
 /**
  * A hadoop implementation of various twitter token counting algorithms
  * 
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class HadoopTwitterTokenTool extends Configured implements Tool {
@@ -56,10 +55,6 @@ public class HadoopTwitterTokenTool extends Configured implements Tool {
 	public int run(String[] args) throws Exception {
 		HadoopTwitterTokenToolOptions opts = new HadoopTwitterTokenToolOptions(args,this.originalArgs,true);
 		opts.performPreprocessing(); // Might run the preprocessing tool
-//		for (TwitterTokenMode mode : opts.modeOptionsOp) {
-//			mode.perform(opts);
-//			opts.output(mode);
-//		}
 		opts.modeOptionsOp.perform(opts);
 		opts.output(opts.modeOptionsOp);
 		return 0;

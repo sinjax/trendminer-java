@@ -37,13 +37,13 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.openimaj.text.nlp.language.LanguageDetector.WeightedLocale;
-import org.openimaj.twitter.TwitterStatus;
+import org.openimaj.twitter.USMFStatus;
 import org.terrier.terms.EnglishSnowballStemmer;
 
 /**
  * A gateway class which loads and uses the #PorterEnglishStemmingFilter
  * 
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class StemmingMode extends TwitterPreprocessingMode<List<String>> {
@@ -68,7 +68,7 @@ public class StemmingMode extends TwitterPreprocessingMode<List<String>> {
 	}
 
 	@Override
-	public List<String> process(TwitterStatus twitterStatus) {
+	public List<String> process(USMFStatus twitterStatus) {
 		List<String> stems = new ArrayList<String>();
 		try {
 			Map<String,Object> localeMap = TwitterPreprocessingMode.results(twitterStatus,langMode);

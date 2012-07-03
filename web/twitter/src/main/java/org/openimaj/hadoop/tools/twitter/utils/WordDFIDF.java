@@ -36,12 +36,11 @@ import java.io.PrintWriter;
 import java.util.Scanner;
 
 import org.openimaj.io.ReadWriteable;
-import org.openimaj.io.ReadWriteableBinary;
 
 /**
  * Convenience class which holds all the components required to calculate DF-IDF 
  * 
- * @author ss
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class WordDFIDF implements ReadWriteable, Comparable<WordDFIDF> {

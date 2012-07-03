@@ -31,12 +31,12 @@ package org.openimaj.tools.twitter.modes.output;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import org.openimaj.twitter.TwitterStatus;
+import org.openimaj.twitter.USMFStatus;
 
 /**
  * An ouput mode which alters the tweets being outputted
  * 
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class AnalysisOutputMode extends TwitterOutputMode{
@@ -49,7 +49,7 @@ public class AnalysisOutputMode extends TwitterOutputMode{
 	}
 
 	@Override
-	public void output(TwitterStatus twitterStatus, PrintWriter outputWriter) throws IOException {
+	public void output(USMFStatus twitterStatus, PrintWriter outputWriter) throws IOException {
 		twitterStatus.writeASCII(outputWriter);
 		if(delim != null){
 			outputWriter.print(this.delim);

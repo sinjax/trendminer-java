@@ -44,14 +44,13 @@ import org.joda.time.DateTime;
 import org.kohsuke.args4j.CmdLineException;
 import org.openimaj.hadoop.tools.twitter.HadoopTwitterTokenToolOptions;
 import org.openimaj.hadoop.tools.twitter.JsonPathFilterSet;
-import org.openimaj.hadoop.tools.twitter.token.mode.CountTweetsInTimeperiod;
-import org.openimaj.twitter.TwitterStatus;
+import org.openimaj.twitter.USMFStatus;
 
 import com.jayway.jsonpath.JsonPath;
 
 /**
 	 * For each tweet match each token against each regex. if the tweet matches at all, emit the tweet.
-	 * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+	 * @author Sina Samangooei (ss@ecs.soton.ac.uk)
 	 *
 	 */
 	public class TokenRegexMapper extends Mapper<LongWritable, Text, NullWritable, Text>{
@@ -76,7 +75,7 @@ import com.jayway.jsonpath.JsonPath;
 					for (String regex : rstrings) {
 						regexes.add(Pattern.compile(regex ));
 					}
-					options = new HadoopTwitterTokenToolOptions(context.getConfiguration().getStrings(CountTweetsInTimeperiod.ARGS_KEY));
+					options = new HadoopTwitterTokenToolOptions(context.getConfiguration().getStrings(HadoopTwitterTokenToolOptions.ARGS_KEY));
 					options.prepare();
 					jsonPath = JsonPath.compile(options.getJsonPath());
 					filters = options.getFilters();
@@ -87,10 +86,16 @@ import com.jayway.jsonpath.JsonPath;
 				}
 			}
 		}
+		
+		@Override
+		protected void cleanup(org.apache.hadoop.mapreduce.Mapper<LongWritable,Text,NullWritable,Text>.Context context) throws IOException ,InterruptedException {
+			regexes = null;
+		};
+		
 		@Override
 		protected void map(LongWritable key, Text value, Mapper<LongWritable,Text,NullWritable,Text>.Context context) throws java.io.IOException ,InterruptedException {
 			List<String> tokens = null;
-			TwitterStatus status = null;
+			USMFStatus status = null;
 			DateTime time = null;
 			try {
 				String svalue = value.toString();

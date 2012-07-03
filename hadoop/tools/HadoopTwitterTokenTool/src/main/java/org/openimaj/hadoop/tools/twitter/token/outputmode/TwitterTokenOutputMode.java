@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011, The University of Southampton and the individual contributors.
+# * Copyright (c) 2011, The University of Southampton and the individual contributors.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -35,7 +35,7 @@ import org.openimaj.hadoop.tools.twitter.HadoopTwitterTokenToolOptions;
 import org.openimaj.hadoop.tools.twitter.token.mode.TwitterTokenMode;
 
 /**
- * @author ss
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public abstract class TwitterTokenOutputMode {
@@ -46,6 +46,8 @@ public abstract class TwitterTokenOutputMode {
 	
 	@Option(name="--results-output-overwrite", aliases="-rorm", required=false, usage="Where should the results be outputted?", metaVar="STRING")
 	public boolean replace = false;
+	
+	
 	
 	/**
 	 * @param opts The token tool options

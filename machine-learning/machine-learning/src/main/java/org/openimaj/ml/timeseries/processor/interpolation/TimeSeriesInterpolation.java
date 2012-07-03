@@ -38,7 +38,7 @@ import org.openimaj.ml.timeseries.series.DoubleTimeSeries;
  * Interpolate values of a time series. Useful for filling in missing values and homogonising 
  * disperate sets of {@link TimeSeries} data
  * 
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public abstract class TimeSeriesInterpolation implements TimeSeriesProcessor<double[],Double,DoubleTimeSeries> {
@@ -130,7 +130,7 @@ public abstract class TimeSeriesInterpolation implements TimeSeriesProcessor<dou
 	
 	/**
 	 * @param series
-	 * @return
+	 * @return a new {@link DoubleTimeSeries} interpolated with times provided in the constructor
 	 */
 	public DoubleTimeSeries interpolate(DoubleTimeSeries series){
 		return interpolate(series,this.times);

@@ -56,7 +56,7 @@ import org.openimaj.io.FileUtils;
 /**
  * Test the MultiStagedJob 
  * 
- * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>, Sina Samangooei <ss@ecs.soton.ac.uk>
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
 public class MultiStagedJobTest {
@@ -119,6 +119,7 @@ public class MultiStagedJobTest {
 			public Class<? extends Mapper<LongWritable, Text, NullWritable, Text>> mapper() {
 				return CountWords.class;
 			}
+			
 		});
 		
 		mjob.queueStage(new Stage<
