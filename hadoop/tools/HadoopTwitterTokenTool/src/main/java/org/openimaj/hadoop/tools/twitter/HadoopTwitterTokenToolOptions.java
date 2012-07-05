@@ -40,6 +40,7 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.ProxyOptionHandler;
+import org.kohsuke.args4j.util.ArgsUtil;
 import org.openimaj.hadoop.sequencefile.SequenceFileUtility;
 import org.openimaj.hadoop.tools.HadoopToolsUtil;
 import org.openimaj.hadoop.tools.twitter.token.mode.TwitterTokenMode;
@@ -48,6 +49,7 @@ import org.openimaj.hadoop.tools.twitter.token.outputmode.TwitterTokenOutputMode
 import org.openimaj.hadoop.tools.twitter.token.outputmode.TwitterTokenOutputModeOption;
 import org.openimaj.io.IOUtils;
 import org.openimaj.tools.InOutToolOptions;
+import org.openimaj.tools.twitter.options.StatusType;
 import org.openimaj.twitter.GeneralJSONTwitter;
 import org.openimaj.twitter.USMFStatus;
 
@@ -78,6 +80,10 @@ public class HadoopTwitterTokenToolOptions extends InOutToolOptions{
 	
 	@Option(name="--preprocessing-tool", aliases="-pp", required=false, usage="Launch an initial stage where the preprocessing tool is used. The input and output values may be ignored", metaVar="STRING")
 	private String preprocessingOptions = null;
+	
+	@Option(name="--status-input-type", aliases="-sit", required=false, usage="The type of social media message being consumed")
+	StatusType statusType = StatusType.TWITTER;
+	
 
 	private String[] args;
 	
@@ -195,7 +201,13 @@ public class HadoopTwitterTokenToolOptions extends InOutToolOptions{
 	 * @return the arguments minus the hadoop arguments
 	 */
 	public String[] getNonHadoopArgs() {
-		return this.args;
+//		return this.args;
+		try {
+			return ArgsUtil.extractArguments(this);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new String[0];
+		}
 	}
 
 	/**
@@ -244,6 +256,7 @@ public class HadoopTwitterTokenToolOptions extends InOutToolOptions{
 			System.out.println("Preprocessing exists, using...");
 		}
 		this.setInput(output);
+		this.statusType = StatusType.USMF; 
 		return;
 		
 	}
@@ -283,5 +296,9 @@ public class HadoopTwitterTokenToolOptions extends InOutToolOptions{
 		catch(Throwable e){
 			throw new IOException("Couldn't cast to type");
 		}
+	}
+
+	public StatusType getStatusType() {
+		return this.statusType;
 	}
 }
