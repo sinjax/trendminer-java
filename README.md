@@ -15,6 +15,17 @@ to get all the sourcecode you need. What I have included directly are the follow
 	tools/TwitterProcessingTool - A command line tool for actually doing the processing, written in an abstract way so it can be extended to be a hadoop tool
 	hadoop/tools/HadoopTwitterProcessingTool - the hadoop version of the command line tool
 
+USMF
+====
+The tool has been updated to support [USMF](https://github.com/Tawlk/hyve/wiki/Unified-Social-Media-Format-(USMF)). 
+The idea is that social media artefacts are now held in a uniform format which contains the salient information from many forms of social media.
+This particular format is in use by the guys over at [Tawlk](http://tawlk.com/) in tools [hyve](https://github.com/Tawlk/hyve) and [kral](https://github.com/Tawlk/kral).
+
+At the moment we only support the translation of Twitter -> USMF, but it is trivial to add more translators. With USMF our preprocessing and analysis tools can be written
+with USMF in mind, and therefore deal with all forms of social media provided that a good translator is implemented.
+
+
+
 INSTALLATION
 ============
 
