@@ -24,12 +24,19 @@ Maven is a really amazing tool for working with java projects. It does all of th
 Here is a quick tutorial of how to get going with the maven project for trendminer. You can download maven itself from here: http://maven.apache.org/. It is just
 a binary that needs java. An easier way to install maven is to own ubuntu (apt-get install maven2) and even EASIER is to own a mac (it is installed by default).
 
-Once you have maven installed, lets compile the source:
+Once you have maven installed, lets compile the source.
 
 Firstly, cd to the trendminer-project directory:
 
 	cd trendminer-project
 
+Before anything you have to make sure all the maven pom.xml files are in the right place.
+The reason they are not in the right place by default is complicated and involves a weird nuance of my development environment
+In future releases I hope to fix this but for now you should do:
+
+	./preparePOM.sh
+
+before doing anything else
 from here you can do this:
 
 	mvn install 
