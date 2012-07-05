@@ -10,10 +10,10 @@ from openimaj that are currently involved with trendminer. The components which 
 openimaj. These are of course, still open source and simply linked remotely, if the code interests you I have detailed below how you can use maven
 to get all the sourcecode you need. What I have included directly are the following projects:
 
-text/nlp - Low level NLP stuff you can imagine being applied to anything, not just twitter (currently contains the actual code for the tokeniser and language detection)
-web/twitter - Twitter specific code, currently contains the twitterstatus model object, some code for reading tweets from files, streams and memory and code for serialising tweets
-tools/TwitterProcessingTool - A command line tool for actually doing the processing, written in an abstract way so it can be extended to be a hadoop tool
-hadoop/tools/HadoopTwitterProcessingTool - the hadoop version of the command line tool
+	text/nlp - Low level NLP stuff you can imagine being applied to anything, not just twitter (currently contains the actual code for the tokeniser and language detection)
+	web/twitter - Twitter specific code, currently contains the twitterstatus model object, some code for reading tweets from files, streams and memory and code for serialising tweets
+	tools/TwitterProcessingTool - A command line tool for actually doing the processing, written in an abstract way so it can be extended to be a hadoop tool
+	hadoop/tools/HadoopTwitterProcessingTool - the hadoop version of the command line tool
 
 INSTALLATION
 ============
