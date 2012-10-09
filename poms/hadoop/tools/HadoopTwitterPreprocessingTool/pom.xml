@@ -27,6 +27,48 @@
 			<timezone>0</timezone>
 		</developer>
 	</developers>
+	<profiles>
+		<profile>
+			<id>minijar</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-shade-plugin</artifactId>
+						<version>2.0</version>
+						<executions>
+							<execution>
+								<configuration>
+									<finalName>HadoopTrendminerTool-mini</finalName>
+									<minimizeJar>true</minimizeJar>
+									<filters>
+										<filter>
+											<artifact>*:*</artifact>
+											<excludes>
+												<exclude>META-INF/*.SF</exclude>
+												<exclude>META-INF/*.DSA</exclude>
+												<exclude>META-INF/*.RSA</exclude>
+											</excludes>
+										</filter>
+									</filters>
+									<transformers>
+										<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+											<manifestEntries>
+												<Main-Class>org.openimaj.tools.twitter.HadoopTwitterPreprocessingTool</Main-Class>
+											</manifestEntries>
+										</transformer>
+										<transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+											<resource>.bin</resource>
+										</transformer>
+									</transformers>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 	<dependencies>
 		<dependency>
 			<groupId>org.trendminer.tools</groupId>
@@ -121,15 +163,15 @@
 	<repositories>
 		<repository>
 			<id>Octopussy maven repository</id>
-			<url>http://octopussy.ecs.soton.ac.uk/m2/thirdparty/</url>
+			<url>http://maven.ecs.soton.ac.uk/content/repositories/octopussy-thirdparty/</url>
 		</repository>
 		<repository>
 			<id>Octopussy maven releases repository</id>
-			<url>http://octopussy.ecs.soton.ac.uk/m2/releases/</url>
+			<url>http://maven.ecs.soton.ac.uk/content/repositories/openimaj-releases/</url>
 		</repository>
 		<repository>
 			<id>Octopussy maven snapshots repository</id>
-			<url>http://octopussy.ecs.soton.ac.uk/m2/snapshots/</url>
+			<url>http://maven.ecs.soton.ac.uk/content/repositories/openimaj-snapshots/</url>
 		</repository>
 	</repositories>
 
