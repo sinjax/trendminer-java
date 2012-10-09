@@ -1,0 +1,7 @@
+*.svn
+pom.xml
+target
+.classpath
+.settings
+.DS_Store
+!poms/**/pom.xml
