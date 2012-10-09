@@ -29,27 +29,23 @@
  */
 package org.openimaj.text.nlp.language;
 
-import gnu.trove.TIntDoubleHashMap;
-import gnu.trove.TIntFloatHashMap;
-import gnu.trove.TIntIntHashMap;
-import gnu.trove.TIntIntProcedure;
 
-import java.io.FileInputStream;
+import gnu.trove.map.hash.TIntDoubleHashMap;
+import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.procedure.TIntIntProcedure;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectOutput;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
+import org.openimaj.citation.annotation.Reference;
+import org.openimaj.citation.annotation.ReferenceType;
 import org.openimaj.io.IOUtils;
-import org.openimaj.io.WriteableBinary;
-import org.openimaj.io.wrappers.ReadWriteableByte;
-import org.openimaj.util.pair.IndependentPair;
 
 import Jama.Matrix;
 
@@ -61,6 +57,13 @@ import com.google.gson.GsonBuilder;
  * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
+@Reference(
+		type = ReferenceType.Article,
+		author = { "Lui, Marco","Baldwin, Timothy" },
+		title = "Cross-domain Feature Selection for Language Identification",
+		year = "2011",
+		booktitle = "in Proceedings of 5th International Joint Conference on Natural Language Processing"
+)
 @SuppressWarnings("unused")
 public class LanguageDetector {
 	
@@ -269,10 +272,18 @@ public class LanguageDetector {
 		return Matrix.constructWithCopy(fv);
 	}
 
+	/**
+	 * @return the underlying {@link LanguageModel}
+	 */
 	public LanguageModel getLanguageModel() {
 		return this.languageModel;		
 	}
 	
+	/**
+	 * prints available languages
+	 * @param args
+	 * @throws IOException
+	 */
 	public static void main(String[] args) throws IOException {
 		LanguageDetector lm = new LanguageDetector();
 		System.out.println("Available languages: ");

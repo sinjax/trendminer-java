@@ -30,15 +30,17 @@
 package org.openimaj.hadoop.mapreduce.stage.helper;
 
 import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.io.Text;
 
 /**
- * A helper class for a common stage type. In this case, a stage that goes from text to a sequence file of bytes indexed by longs
+ * A helper class for a common stage type. In this case, a stage that goes from
+ * text to a sequence file of bytes indexed by longs
+ * 
  * @author Sina Samangooei (ss@ecs.soton.ac.uk)
- *
+ * 
  */
 public abstract class TextByteByteStage extends TextSequenceFileStage<
-			BytesWritable,BytesWritable,
-			BytesWritable,BytesWritable>{
+			BytesWritable, BytesWritable,
+			BytesWritable, BytesWritable>
+{
 
 }

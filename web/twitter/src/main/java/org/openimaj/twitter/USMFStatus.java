@@ -29,23 +29,17 @@
  */
 package org.openimaj.twitter;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.openimaj.io.ReadWriteable;
 
 import com.google.gson.Gson;
 
@@ -55,13 +49,11 @@ import com.google.gson.Gson;
  * JSON, or be given a GeneralJSON class for a JSON object it should expect to
  * read from JSON and convert to USMF. Translation from alternative JSON sources
  * relies on the extension of the GeneralJSON class for that format.
- * 
+ *
  * @author Jonathon Hare (jsh2@ecs.soton.ac.uk), Sina Samangooei (ss@ecs.soton.ac.uk), Laurence Willmore (lgw1e10@ecs.soton.ac.uk)
- * 
+ *
  */
-public class USMFStatus implements ReadWriteable, Cloneable, GeneralJSON {
-
-	private transient Gson gson = new Gson();
+public class USMFStatus extends GeneralJSON implements Cloneable{
 	private transient Class<? extends GeneralJSON> generalJSONclass; // class of
 																		// the
 																		// source.
@@ -154,20 +146,22 @@ public class USMFStatus implements ReadWriteable, Cloneable, GeneralJSON {
 	 * List of to users
 	 */
 	public ArrayList<User> to_users;
+
+	/**
+	 * Reply to
+	 */
+	public User reply_to;
 	/**
 	 * List of links
 	 */
 	public ArrayList<Link> links;
 
-	/**
-	 * analysos held in the object
-	 */
-	public Map<String, Object> analysis = new HashMap<String, Object>();
+
 	private boolean invalid = false;
 
 	/**
 	 * Constructor used if the input JSON is not a USMF json string.
-	 * 
+	 *
 	 * @param generalJSONclass
 	 *            : The class of the GeneralJSON extension.
 	 */
@@ -191,6 +185,20 @@ public class USMFStatus implements ReadWriteable, Cloneable, GeneralJSON {
 	}
 
 	/**
+	 * @return the type of json that backs this instance (used primarily for reading)
+	 */
+	public Class<? extends GeneralJSON> getGeneralJSONClass(){
+		return this.generalJSONclass;
+	}
+	/**
+	 * set the type of json that backs this instance (used primarily for reading)
+	 * @param g
+	 */
+	public void setGeneralJSONClass(Class<? extends GeneralJSON> g){
+		this.generalJSONclass = g;
+	}
+
+	/**
 	 * @return the USMF is either a delete notice, a scrub geo notice or some
 	 *         other non-status USMF
 	 */
@@ -204,10 +212,11 @@ public class USMFStatus implements ReadWriteable, Cloneable, GeneralJSON {
 		fillFromString(line);
 	}
 
+
 	/**
 	 * Used by readASCII(), and available for external use to fill this
 	 * USMFStatus with the information held in the line
-	 * 
+	 *
 	 * @param line
 	 *            = json string in the format specified by the constructor of
 	 *            this USMFStatus (if empty constructor, expects a USMFSStatus
@@ -242,23 +251,13 @@ public class USMFStatus implements ReadWriteable, Cloneable, GeneralJSON {
 			if (Modifier.isPublic(field.getModifiers())) {
 				try {
 					field.set(this, field.get(read));
-				} catch (IllegalArgumentException e) {					
+				} catch (IllegalArgumentException e) {
 					e.printStackTrace();
-				} catch (IllegalAccessException e) {					
+				} catch (IllegalAccessException e) {
 					e.printStackTrace();
 				}
 			}
 		}
-	}
-
-	@Override
-	public String asciiHeader() {
-		return "";
-	}
-
-	@Override
-	public void writeASCII(PrintWriter out) throws IOException {
-		gson.toJson(this, out);
 	}
 
 	@Override
@@ -267,31 +266,10 @@ public class USMFStatus implements ReadWriteable, Cloneable, GeneralJSON {
 	}
 
 	/**
-	 * Add analysis to the analysis object. This is where all non twitter stuff
-	 * should go
-	 * 
-	 * @param <T>
-	 *            The type of data being saved
-	 * @param annKey
-	 *            the key
-	 * @param annVal
-	 *            the value
+	 * @return convert this {@link USMFStatus} to JSON using {@link Gson}
 	 */
-	public <T> void addAnalysis(String annKey, T annVal) {
-		if (annVal instanceof Number)
-			this.analysis.put(annKey, ((Number) annVal).doubleValue());
-		else
-			this.analysis.put(annKey, annVal);
-	}
-
-	/**
-	 * @param <T>
-	 * @param name
-	 * @return the analysis under the name
-	 */
-	@SuppressWarnings("unchecked")
-	public <T> T getAnalysis(String name) {
-		return (T) this.analysis.get(name);
+	public String toJson(){
+		return gson.toJson(this, this.getClass());
 	}
 
 	@Override
@@ -357,81 +335,19 @@ public class USMFStatus implements ReadWriteable, Cloneable, GeneralJSON {
 	}
 
 	@Override
-	public void readBinary(DataInput in) throws IOException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public byte[] binaryHeader() {
-		return "BINARYHEADER".getBytes();
-	}
-
-	@Override
-	public void writeBinary(DataOutput out) throws IOException {
-		throw new UnsupportedOperationException();
-
-	}
-
-	@Override
 	public USMFStatus clone() {
 		return clone(USMFStatus.class);
 	}
 
 	/**
 	 * Clones the tweet to the given class.
-	 * 
+	 *
 	 * @param <T>
 	 * @param clazz
 	 * @return a clone of the status
 	 */
 	public <T extends USMFStatus> T clone(Class<T> clazz) {
 		return gson.fromJson(gson.toJson(this), clazz);
-	}
-
-	/**
-	 * Convenience to allow writing of just the analysis to a writer
-	 * 
-	 * @param outputWriter
-	 * @param selectiveAnalysis
-	 */
-	public void writeASCIIAnalysis(PrintWriter outputWriter,
-			List<String> selectiveAnalysis) {
-		writeASCIIAnalysis(outputWriter, selectiveAnalysis,
-				new ArrayList<String>());
-	}
-
-	/**
-	 * Convenience to allow writing of just the analysis and some status
-	 * information to a writer
-	 * 
-	 * @param outputWriter
-	 * @param selectiveAnalysis
-	 * @param selectiveStatus
-	 */
-	public void writeASCIIAnalysis(PrintWriter outputWriter,
-			List<String> selectiveAnalysis, List<String> selectiveStatus) {
-		Map<String, Object> toOutput = new HashMap<String, Object>();
-		Map<String, Object> analysisBit = new HashMap<String, Object>();
-		toOutput.put("analysis", analysisBit);
-		for (String analysisKey : selectiveAnalysis) {
-			analysisBit.put(analysisKey, getAnalysis(analysisKey));
-		}
-		for (String status : selectiveStatus) {
-			try {
-
-				Field f = this.getClass().getField(status);
-				toOutput.put(status, f.get(this));
-			} catch (SecurityException e) {
-				System.err.println("Invalid field: " + status);
-			} catch (NoSuchFieldException e) {
-				System.err.println("Invalid field: " + status);
-			} catch (IllegalArgumentException e) {
-				System.err.println("Invalid field: " + status);
-			} catch (IllegalAccessException e) {
-				System.err.println("Invalid field: " + status);
-			}
-		}
-		gson.toJson(toOutput, outputWriter);
 	}
 
 	/**
@@ -455,59 +371,59 @@ public class USMFStatus implements ReadWriteable, Cloneable, GeneralJSON {
 		/**
 		 * User Name
 		 */
-		public String name;  
+		public String name;
 		/**
 		 * Real name of user
 		 */
-		public String real_name;  
+		public String real_name;
 		/**
 		 * Unique User ID
 		 */
-		public double id;  
+		public double id;
 		/**
 		 * Spoken language of user
 		 */
-		public String language;  
+		public String language;
 		/**
 		 * UTC time offset of user
 		 */
-		public double utc;  
+		public double utc;
 		/**
 		 * Latitude/Logitude User location
 		 */
-		public double[] geo;  
+		public double[] geo;
 		/**
 		 * User profile description
 		 */
-		public String description;  
+		public String description;
 		/**
 		 * Direct href to avatar image
 		 */
-		public String avatar;  
+		public String avatar;
 		/**
 		 * Plain Language User location
 		 */
-		public String location;  
+		public String location;
 		/**
 		 * Number of subscribers
 		 */
-		public double subscribers;  
+		public double subscribers;
 		/**
 		 * Number of subscriptions
 		 */
-		public int subscriptions;  
+		public int subscriptions;
 		/**
 		 * Number of postings made
 		 */
-		public double postings;  
+		public double postings;
 		/**
 		 * Href to user profile
 		 */
-		public String profile;  
+		public String profile;
 		/**
 		 * Href to user website
 		 */
-		public String website;  
+		public String website;
 
 		@Override
 		public boolean equals(Object obj) {
@@ -523,10 +439,10 @@ public class USMFStatus implements ReadWriteable, Cloneable, GeneralJSON {
 						else if (!field.get(this).equals(field.get(in)))
 							return false;
 					} catch (IllegalArgumentException e) {
-						
+
 						e.printStackTrace();
 					} catch (IllegalAccessException e) {
-						
+
 						e.printStackTrace();
 					}
 				}
@@ -546,15 +462,15 @@ public class USMFStatus implements ReadWriteable, Cloneable, GeneralJSON {
 		/**
 		 * Title of item
 		 */
-		public String title;  
+		public String title;
 		/**
 		 * Direct href to thumbnail for item
 		 */
-		public String thumbnail;  
+		public String thumbnail;
 		/**
 		 * Direct href to item
 		 */
-		public String href;  
+		public String href;
 
 		@Override
 		public boolean equals(Object obj) {
@@ -570,10 +486,10 @@ public class USMFStatus implements ReadWriteable, Cloneable, GeneralJSON {
 						else if (!field.get(this).equals(field.get(in)))
 							return false;
 					} catch (IllegalArgumentException e) {
-						
+
 						e.printStackTrace();
 					} catch (IllegalAccessException e) {
-						
+
 						e.printStackTrace();
 					}
 				}
@@ -586,6 +502,11 @@ public class USMFStatus implements ReadWriteable, Cloneable, GeneralJSON {
 	@Override
 	public void fillUSMF(USMFStatus status) {
 		status.fillFrom(this);
+	}
+
+	@Override
+	public void fromUSMF(USMFStatus status) {
+		this.fillFrom(status);
 	}
 
 }

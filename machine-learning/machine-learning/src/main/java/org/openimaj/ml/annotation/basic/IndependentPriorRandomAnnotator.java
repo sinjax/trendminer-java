@@ -40,11 +40,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.openimaj.experiment.dataset.Dataset;
+import org.openimaj.feature.FeatureExtractor;
 import org.openimaj.ml.annotation.Annotated;
-import org.openimaj.ml.annotation.AutoAnnotation;
 import org.openimaj.ml.annotation.BatchAnnotator;
-import org.openimaj.ml.annotation.FeatureExtractor;
+import org.openimaj.ml.annotation.ScoredAnnotation;
 import org.openimaj.ml.annotation.basic.util.NumAnnotationsChooser;
 
 import cern.jet.random.Empirical;
@@ -60,11 +59,11 @@ import cern.jet.random.engine.MersenneTwister;
  * 
  * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
  *
- * @param <O> Type of object being annotated
- * @param <A> Type of annotation.
+ * @param <OBJECT> Type of object being annotated
+ * @param <ANNOTATION> Type of annotation.
  */
-public class IndependentPriorRandomAnnotator<O, A> extends BatchAnnotator<O, A, FeatureExtractor<Object, O>> {
-	protected List<A> annotations;
+public class IndependentPriorRandomAnnotator<OBJECT, ANNOTATION> extends BatchAnnotator<OBJECT, ANNOTATION, FeatureExtractor<Object, OBJECT>> {
+	protected List<ANNOTATION> annotations;
 	protected NumAnnotationsChooser numAnnotations;
 	protected EmpiricalWalker annotationProbability;
 	
@@ -81,15 +80,15 @@ public class IndependentPriorRandomAnnotator<O, A> extends BatchAnnotator<O, A, 
 	}
 
 	@Override
-	public void train(Dataset<? extends Annotated<O, A>> data) {
+	public void train(List<? extends Annotated<OBJECT, ANNOTATION>> data) {
 		TIntIntHashMap nAnnotationCounts = new TIntIntHashMap();
-		TObjectIntHashMap<A> annotationCounts = new TObjectIntHashMap<A>();
+		TObjectIntHashMap<ANNOTATION> annotationCounts = new TObjectIntHashMap<ANNOTATION>();
 		int maxVal = 0;
 		
-		for (Annotated<O, A> sample : data) {
-			Collection<A> annos = sample.getAnnotations();
+		for (Annotated<OBJECT, ANNOTATION> sample : data) {
+			Collection<ANNOTATION> annos = sample.getAnnotations();
 
-			for (A s : annos) {
+			for (ANNOTATION s : annos) {
 				annotationCounts.adjustOrPutValue(s, 1, 1);
 			}
 
@@ -99,11 +98,11 @@ public class IndependentPriorRandomAnnotator<O, A> extends BatchAnnotator<O, A, 
 		}
 		
 		//build distribution and rng for each annotation
-		annotations = new ArrayList<A>();
+		annotations = new ArrayList<ANNOTATION>();
 		final TDoubleArrayList probs = new TDoubleArrayList();
-		annotationCounts.forEachEntry(new TObjectIntProcedure<A>() {
+		annotationCounts.forEachEntry(new TObjectIntProcedure<ANNOTATION>() {
 			@Override
-			public boolean execute(A a, int b) {
+			public boolean execute(ANNOTATION a, int b) {
 				annotations.add(a);
 				probs.add(b);
 				return true;
@@ -115,21 +114,21 @@ public class IndependentPriorRandomAnnotator<O, A> extends BatchAnnotator<O, A, 
 	}
 
 	@Override
-	public List<AutoAnnotation<A>> annotate(O image) {
+	public List<ScoredAnnotation<ANNOTATION>> annotate(OBJECT image) {
 		int nAnnotations = numAnnotations.numAnnotations();
 		
-		List<AutoAnnotation<A>> annos = new ArrayList<AutoAnnotation<A>>();
+		List<ScoredAnnotation<ANNOTATION>> annos = new ArrayList<ScoredAnnotation<ANNOTATION>>();
 		
 		for (int i=0; i<nAnnotations; i++) {
 			int annotationIdx = annotationProbability.nextInt();
-			annos.add(new AutoAnnotation<A>(annotations.get(annotationIdx), (float) annotationProbability.pdf(annotationIdx+1)));
+			annos.add(new ScoredAnnotation<ANNOTATION>(annotations.get(annotationIdx), (float) annotationProbability.pdf(annotationIdx+1)));
 		}
 		
 		return annos;
 	}
 
 	@Override
-	public Set<A> getAnnotations() {
-		return new HashSet<A>(annotations);
+	public Set<ANNOTATION> getAnnotations() {
+		return new HashSet<ANNOTATION>(annotations);
 	}
 }

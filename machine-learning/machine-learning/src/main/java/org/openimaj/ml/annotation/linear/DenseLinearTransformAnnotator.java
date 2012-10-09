@@ -39,13 +39,12 @@ import java.util.Set;
 
 import org.openimaj.citation.annotation.Reference;
 import org.openimaj.citation.annotation.ReferenceType;
-import org.openimaj.experiment.dataset.Dataset;
+import org.openimaj.feature.FeatureExtractor;
 import org.openimaj.feature.FeatureVector;
 import org.openimaj.math.matrix.PseudoInverse;
 import org.openimaj.ml.annotation.Annotated;
-import org.openimaj.ml.annotation.AutoAnnotation;
 import org.openimaj.ml.annotation.BatchAnnotator;
-import org.openimaj.ml.annotation.FeatureExtractor;
+import org.openimaj.ml.annotation.ScoredAnnotation;
 
 import Jama.Matrix;
 
@@ -57,9 +56,9 @@ import Jama.Matrix;
  * 
  * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
  *
- * @param <O> Type of object being annotated
- * @param <A> Type of annotation
- * @param <E> Type of feature extractor
+ * @param <OBJECT> Type of object being annotated
+ * @param <ANNOTATION> Type of annotation
+ * @param <EXTRACTOR> Type of feature extractor
  */
 @Reference(
 		type = ReferenceType.Inproceedings,
@@ -74,13 +73,13 @@ import Jama.Matrix;
 		volume = "7540"
 )
 public class DenseLinearTransformAnnotator<
-	O,
-	A,
-	E extends FeatureExtractor<? extends FeatureVector, O>>
+	OBJECT,
+	ANNOTATION,
+	EXTRACTOR extends FeatureExtractor<? extends FeatureVector, OBJECT>>
 extends
-	BatchAnnotator<O, A, E> 
+	BatchAnnotator<OBJECT, ANNOTATION, EXTRACTOR> 
 {
-	protected List<A> terms;
+	protected List<ANNOTATION> terms;
 	protected Matrix transform;
 	protected int k = 10;
 	
@@ -89,23 +88,23 @@ extends
 	 * @param k the number of dimensions (rank of the pseudo-inverse)
 	 * @param extractor the feature extractor
 	 */
-	public DenseLinearTransformAnnotator(int k, E extractor) {
+	public DenseLinearTransformAnnotator(int k, EXTRACTOR extractor) {
 		super(extractor);
 		this.k = k;
 	}
 
 	@Override
-	public void train(Dataset<? extends Annotated<O, A>> data) {
-		Set<A> termsSet = new HashSet<A>();
+	public void train(List<? extends Annotated<OBJECT, ANNOTATION>> data) {
+		Set<ANNOTATION> termsSet = new HashSet<ANNOTATION>();
 		
-		for (Annotated<O, A> d : data) 
+		for (Annotated<OBJECT, ANNOTATION> d : data) 
 			termsSet.addAll(d.getAnnotations());
-		terms = new ArrayList<A>(termsSet);
+		terms = new ArrayList<ANNOTATION>(termsSet);
 		
 		final int termLen = terms.size();
 		final int trainingLen = data.size();
 		
-		Annotated<O, A> first = data.getItem(0);
+		Annotated<OBJECT, ANNOTATION> first = data.get(0);
 		double[] fv = extractor.extractFeature(first.getObject()).asDoubleVector();
 		
 		final int featureLen = fv.length;
@@ -115,44 +114,44 @@ extends
 		
 		addRow(F, W, 0, fv, first.getAnnotations());
 		for (int i=1; i<trainingLen; i++) { 
-			addRow(F, W, i, data.getItem(i));
+			addRow(F, W, i, data.get(i));
 		}
 		
 		Matrix pinvF = PseudoInverse.pseudoInverse(F, k);
 		transform = pinvF.times(W);
 	}
 
-	private void addRow(Matrix F, Matrix W, int r, Annotated<O, A> data) {
+	private void addRow(Matrix F, Matrix W, int r, Annotated<OBJECT, ANNOTATION> data) {
 		double[] fv = extractor.extractFeature(data.getObject()).asDoubleVector();
 		
 		addRow(F, W, r, fv, data.getAnnotations());
 	}
 	
-	private void addRow(Matrix F, Matrix W, int r, double [] fv, Collection<A> annotations) {
+	private void addRow(Matrix F, Matrix W, int r, double [] fv, Collection<ANNOTATION> annotations) {
 		for (int j=0; j<F.getColumnDimension(); j++)
 			F.getArray()[r][j] = fv[j];
 		
-		for (A t : annotations) {
+		for (ANNOTATION t : annotations) {
 			W.getArray()[r][terms.indexOf(t)]++;
 		}
 	}
 	
 	@Override
-	public List<AutoAnnotation<A>> annotate(O image) {
+	public List<ScoredAnnotation<ANNOTATION>> annotate(OBJECT image) {
 		double[] fv = extractor.extractFeature(image).asDoubleVector();
 		
 		Matrix F = new Matrix(new double[][] {fv});
 		
 		Matrix res = F.times(transform);
 		
-		List<AutoAnnotation<A>> ann = new ArrayList<AutoAnnotation<A>>();
+		List<ScoredAnnotation<ANNOTATION>> ann = new ArrayList<ScoredAnnotation<ANNOTATION>>();
 		for (int i=0; i<terms.size(); i++) {
-			ann.add( new AutoAnnotation<A>(terms.get(i), (float) res.get(0,i)) );
+			ann.add( new ScoredAnnotation<ANNOTATION>(terms.get(i), (float) res.get(0,i)) );
 		}
 		
-		Collections.sort(ann, new Comparator<AutoAnnotation<A>>() {
+		Collections.sort(ann, new Comparator<ScoredAnnotation<ANNOTATION>>() {
 			@Override
-			public int compare(AutoAnnotation<A> o1, AutoAnnotation<A> o2) {
+			public int compare(ScoredAnnotation<ANNOTATION> o1, ScoredAnnotation<ANNOTATION> o2) {
 				return o1.confidence < o2.confidence ? 1 : -1;
 			}
 		});
@@ -161,7 +160,7 @@ extends
 	}
 	
 	@Override
-	public Set<A> getAnnotations() {
-		return new HashSet<A>(terms);
+	public Set<ANNOTATION> getAnnotations() {
+		return new HashSet<ANNOTATION>(terms);
 	}
 }

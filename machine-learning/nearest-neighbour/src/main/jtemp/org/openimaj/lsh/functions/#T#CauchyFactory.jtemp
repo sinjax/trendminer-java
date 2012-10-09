@@ -1,0 +1,86 @@
+/**
+ * Copyright (c) 2011, The University of Southampton and the individual contributors.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *   * 	Redistributions of source code must retain the above copyright notice,
+ * 	this list of conditions and the following disclaimer.
+ *
+ *   *	Redistributions in binary form must reproduce the above copyright notice,
+ * 	this list of conditions and the following disclaimer in the documentation
+ * 	and/or other materials provided with the distribution.
+ *
+ *   *	Neither the name of the University of Southampton nor the names of its
+ * 	contributors may be used to endorse or promote products derived from this
+ * 	software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+package org.openimaj.lsh.functions;
+
+import org.openimaj.feature.#T#FVComparison;
+
+import cern.jet.random.Uniform;
+import cern.jet.random.engine.MersenneTwister;
+
+/**
+ * A hash function factory for producing hash functions that use a Cauchy
+ * distribution to approximate L1 distance.
+ * 
+ * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
+ */
+public class #T#CauchyFactory extends #T#PStableFactory {
+	private class Function extends PStableFunction {
+		Function(int ndims, MersenneTwister rng) {
+			super(rng);
+
+			final Uniform uniform = new Uniform(0, w, rng);
+			b = (float) uniform.nextDouble();
+
+			// random direction
+			r = new double[ndims];
+			for (int i = 0; i < ndims; i++) {
+				r[i] = cauchy();
+			}
+		}
+
+		private final double cauchy() {
+			return Math.tan(Math.PI * (rng.nextDouble() - 0.5));
+		}
+	}
+
+	/**
+	 * Construct the factory with the given parameters.
+	 * 
+	 * @param ndims
+	 *            number of dimensions of the data
+	 * @param rng
+	 *            the random number generator
+	 * @param w
+	 *            the width parameter
+	 */
+	public #T#CauchyFactory(int ndims, MersenneTwister rng, double w) {
+		super(ndims, rng, w);
+	}
+
+	@Override
+	public Function create() {
+		return new Function(ndims, rng);
+	}
+
+	@Override
+	protected #T#FVComparison fvDistanceFunction() {
+		return #T#FVComparison.EUCLIDEAN;
+	}
+}
