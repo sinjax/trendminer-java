@@ -36,7 +36,7 @@ import org.kohsuke.args4j.CmdLineOptionsProvider;
 
 /**
  * The mode of the twitter processing tool
- * 
+ *
  * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
@@ -45,12 +45,21 @@ public enum TwitterPreprocessingModeOption implements CmdLineOptionsProvider {
 	 * Tokenise the tweet using the twokeniser implementation
 	 */
 	TOKENISE {
-		@Override		
+		@Override
 		public TokeniseMode getOptions() {
 			return new TokeniseMode();
 		}
-		
+
 	},
+// TODO: Fix the NER stuff
+//	NER{
+//
+//		@Override
+//		public NERMode getOptions() {
+//				return new NERMode();
+//		}
+//
+//	},
 	/**
 	 * Language detection using the langid implementation
 	 */
@@ -63,7 +72,7 @@ public enum TwitterPreprocessingModeOption implements CmdLineOptionsProvider {
 				return null;
 			}
 		}
-		
+
 	},
 	/**
 	 * Stem tweets. Don't bother with non english tweets.
@@ -76,7 +85,7 @@ public enum TwitterPreprocessingModeOption implements CmdLineOptionsProvider {
 			} catch (IOException e) {
 				return null;
 			}
-		}		
+		}
 	}
 	;
 
@@ -85,6 +94,6 @@ public enum TwitterPreprocessingModeOption implements CmdLineOptionsProvider {
 	 */
 	@Override
 	public abstract TwitterPreprocessingMode<?> getOptions() ;
-	
+
 }
 

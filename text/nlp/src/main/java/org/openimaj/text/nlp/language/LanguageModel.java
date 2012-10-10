@@ -29,8 +29,9 @@
  */
 package org.openimaj.text.nlp.language;
 
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
+
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.procedure.TIntObjectProcedure;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -48,7 +49,15 @@ import org.openimaj.io.wrappers.WriteableArrayBinary;
 
 import Jama.Matrix;
 
-class LanguageModel implements ReadWriteableBinary{
+/**
+ * The data used by {@link LanguageDetector}
+ * 
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
+ * 
+ *
+ */
+
+public class LanguageModel implements ReadWriteableBinary{
 	Matrix naiveBayesPC; // N x 1 
 	Matrix naiveBayesPTC; // N x M
 	String[] naiveBayesClasses; // the language classes
@@ -56,8 +65,14 @@ class LanguageModel implements ReadWriteableBinary{
 	int[] tk_nextmove;
 	int naiveBayesNFeats;
 	
+	/**
+	 * do nothing
+	 */
 	public LanguageModel(){}
 	
+	/**
+	 * @param languageModel
+	 */
 	@SuppressWarnings("unchecked")
 	public LanguageModel(Map<String,Object> languageModel){	
 		List<Double> nb_pc_list = (List<Double>) languageModel.get("nb_pc");

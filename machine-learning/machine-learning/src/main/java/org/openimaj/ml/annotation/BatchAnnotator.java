@@ -29,36 +29,55 @@
  */
 package org.openimaj.ml.annotation;
 
-import org.openimaj.experiment.dataset.Dataset;
+import java.util.List;
+
+import org.openimaj.experiment.dataset.GroupedDataset;
+import org.openimaj.experiment.dataset.ListDataset;
+import org.openimaj.feature.FeatureExtractor;
+import org.openimaj.ml.training.BatchTrainer;
 
 /**
  * An {@link Annotator} that is trained in "batch" mode; all 
- * training examples are presented at once.
+ * training examples are presented at once. Calling the
+ * {@link #train(List)} method more than once will cause
+ * the internal model to be re-initialised using the new
+ * data. If you want to implement an {@link Annotator} that 
+ * can be updated, implement the {@link IncrementalAnnotator}
+ * interface instead. 
  * 
  * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
  *
- * @param <O> Type of object being annotated
- * @param <A> Type of annotation
- * @param <E> Type of feature extractor
+ * @param <OBJECT> Type of object being annotated
+ * @param <ANNOTATION> Type of annotation
+ * @param <EXTRACTOR> Type of feature extractor
  */
 public abstract class BatchAnnotator<
-	O, 
-	A, 
-	E extends FeatureExtractor<?, O>> 
+	OBJECT, 
+	ANNOTATION, 
+	EXTRACTOR extends FeatureExtractor<?, OBJECT>> 
 extends 
-	Annotator<O, A, E> 
+	AbstractAnnotator<OBJECT, ANNOTATION, EXTRACTOR>
+implements
+	BatchTrainer<Annotated<OBJECT, ANNOTATION>>
 {
 	/**
 	 * Construct with the given feature extractor.
 	 * @param extractor the feature extractor
 	 */
-	public BatchAnnotator(E extractor) {
+	public BatchAnnotator(EXTRACTOR extractor) {
 		super(extractor);
 	}
-
+	
 	/**
-	 * Train the annotator with the given dataset.
-	 * @param data the training data
+	 * Train the annotator with the given grouped dataset. Internally, 
+	 * the dataset is converted to a list containing exactly one 
+	 * reference to each object in the dataset with (potentially) 
+	 * multiple annotations. 
+	 * 
+	 * @param dataset
+	 *            the dataset to train on
 	 */
-	public abstract void train(Dataset<? extends Annotated<O, A>> data);
+	public void train(GroupedDataset<ANNOTATION, ListDataset<OBJECT>, OBJECT> dataset) {
+		train(AnnotatedObject.createList(dataset));
+	}
 }

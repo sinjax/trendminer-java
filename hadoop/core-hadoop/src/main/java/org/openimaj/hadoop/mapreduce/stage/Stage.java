@@ -41,14 +41,19 @@ import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.compress.GzipCodec;
+import org.apache.hadoop.io.compress.LzoCodec;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.map.MultithreadedMapper;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.openimaj.util.reflection.ReflectionUtils;
 
+import com.hadoop.compression.lzo.LzopCodec;
 import com.hadoop.mapreduce.LzoTextInputFormat;
 
 /**
@@ -129,22 +134,63 @@ public abstract class Stage<
 		else{			
 			job.setInputFormatClass(inputFormatClass);
 		}
+		
 		job.setMapOutputKeyClass(mapOutputKeyClass);
 		job.setMapOutputValueClass(mapOutputValueClass);
 		job.setOutputKeyClass(outputKeyClass);
 		job.setOutputValueClass(outputValueClass);
 		job.setOutputFormatClass(outputFormatClass);
+		if(outputFormatClass.equals(TextOutputFormat.class) && this.lzoCompress()){
+			TextOutputFormat.setCompressOutput(job, true);
+			TextOutputFormat.setOutputCompressorClass(job, LzopCodec.class);
+		}else{
+			TextOutputFormat.setCompressOutput(job, false);
+		}
 		
 		job.setJarByClass(this.getClass());
 		setInputPaths(job, inputs);
 		setOutputPath(job, output);
-		job.setMapperClass(mapper());
-		job.setReducerClass(reducer());
-		job.setCombinerClass(combiner());
+		setMapperClass(job,mapper());
+		setReducerClass(job,reducer());
+		setCombinerClass(job,combiner());
 		setup(job);
 		return job;
 	}
 	
+	/**
+	 * For stages which require more fine grained control of how a job's combiner is set. This class is called with the job being constructed
+	 * by this stage and the result of {@link #combiner()}.
+	 * @param job
+	 * @param combiner
+	 */
+	public void setCombinerClass(Job job, Class<? extends Reducer<MAP_OUTPUT_KEY, MAP_OUTPUT_VALUE, MAP_OUTPUT_KEY, MAP_OUTPUT_VALUE>> combiner) {
+		job.setCombinerClass(combiner);
+	}
+
+	/**
+	 * For stages which require more fine grained control of how a job's reducer is set. This class is called with the job being constructed
+	 * by this stage and the result of {@link #reducer()}.
+	 * @param job
+	 * @param reducer
+	 */
+	public void setReducerClass(Job job,Class<? extends Reducer<MAP_OUTPUT_KEY, MAP_OUTPUT_VALUE, OUTPUT_KEY, OUTPUT_VALUE>> reducer) {
+		job.setReducerClass(reducer);
+	}
+
+	/**
+	 * For stages which need more fine grained control of how a job's mapper is set. For example, {@link MultithreadedMapper}) stages
+	 * should overwrite this class, set the job's mapper to {@link MultithreadedMapper} with {@link Job#setMapperClass(Class)} and set the 
+	 * {@link MultithreadedMapper} mapper classed with {@link MultithreadedMapper#setMapperClass(Job, Class)}.
+	 * 
+	 * this function is called with the result of {@link #mapper()}
+	 * 
+	 * @param job 
+	 * @param mapper
+	 */
+	public void setMapperClass(Job job, Class<? extends Mapper<INPUT_KEY, INPUT_VALUE, MAP_OUTPUT_KEY, MAP_OUTPUT_VALUE>> mapper) {
+		job.setMapperClass(mapper);
+	}
+
 	private boolean containsLZO(Path[] inputs) {
 		for (Path path : inputs) {
 			if(path.getName().endsWith(".lzo"))return true;
@@ -212,5 +258,12 @@ public abstract class Stage<
 	 */
 	public void finished(Job job) {
 		
+	}
+	
+	/**
+	 * @return Whether this stage should LZO compress its output
+	 */
+	public boolean lzoCompress() {
+		return false;
 	}
 }

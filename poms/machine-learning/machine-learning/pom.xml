@@ -10,7 +10,7 @@
 	<artifactId>machine-learning</artifactId>
 	<packaging>jar</packaging>
 	<version>1.0.0-SNAPSHOT</version>
-	<name>twitter</name>
+	<name>The OpenIMAJ machine learning Library</name>
 	<inceptionYear>2012</inceptionYear>
 	<developers>
 		<developer>
@@ -47,8 +47,14 @@
 		</dependency>
 		<dependency>
 			<groupId>org.openimaj</groupId>
-			<artifactId>test-resources</artifactId>
+			<artifactId>nearest-neighbour</artifactId>
 			<version>1.0.6-SNAPSHOT</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.trendminer</groupId>
+			<artifactId>test-resources</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -120,15 +126,15 @@
 	<repositories>
 		<repository>
 			<id>Octopussy maven repository</id>
-			<url>http://octopussy.ecs.soton.ac.uk/m2/thirdparty/</url>
+			<url>http://maven.ecs.soton.ac.uk/content/repositories/octopussy-thirdparty/</url>
 		</repository>
 		<repository>
 			<id>Octopussy maven releases repository</id>
-			<url>http://octopussy.ecs.soton.ac.uk/m2/releases/</url>
+			<url>http://maven.ecs.soton.ac.uk/content/repositories/openimaj-releases/</url>
 		</repository>
 		<repository>
 			<id>Octopussy maven snapshot repository</id>
-			<url>http://octopussy.ecs.soton.ac.uk/m2/snapshots/</url>
+			<url>http://maven.ecs.soton.ac.uk/content/repositories/openimaj-snapshots/</url>
 			<snapshots>
 				<enabled>true</enabled>
 				<updatePolicy>daily</updatePolicy>

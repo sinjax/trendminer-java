@@ -34,4 +34,10 @@
 		<module>hadoop</module>
 		<module>machine-learning</module>
 	</modules>
+	<repositories>
+    <repository>
+      <id>openimaj-maven</id>
+      <url>http://maven.openimaj.org/</url>
+    </repository>
+  </repositories>
 </project>
