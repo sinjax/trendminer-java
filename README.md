@@ -116,17 +116,22 @@ INPUT
 We assume that the input files are one item/line in JSON format.
  
 The tool takes input in 3 ways:
+
 1. stdio: Input from the standard input (the default setting)
--i -
+	-i -
+
 2. single file: Input is taken from a single file
--i filename
+	-i filename
+
 3. multiple files: A single file is given with file names, one per line. Each file is treated as a source of tweets.
--if filecontainingfilenames
+	-if filecontainingfilenames
  
---n-tweets N
+	--n-tweets N
+
 By default, every line in all inputs is analysed unless the --n-tweets N option is specified in which case N tweets are analysed (including across multiple files)
  
--it 
+	-it
+
 Specifies the input format schema.
 TWITTER 
 USMF (Unified Social Media Format) is a data format that generalizes data extracted from social networks.
@@ -139,42 +144,49 @@ The tool can output to stdout (default setting) or to a file. The latter is acti
  
 The output can have multiple modes:
 1. Full mode: outputs the entire original JSON with the analysis appended as a special field (default mode)
--om APPEND
+	
+	-om APPEND
+
 2. Partial mode: selective components of the original input are maintained plus the analysis. By default these selective components are the “id” and “create_data” date.
--om CONDENSED and the components to maintain can be selected using -te component1 -te component2 etc.
+
+	-om CONDENSED and the components to maintain can be selected using -te component1 -te component2 etc.
+
 3. Analysis mode: in this mode only the analysis data is outputted, all other input information is supressed.
--om ANALYSIS
+	
+	-om ANALYSIS
  
 Obs: if you have hdfs installed, we observed that the most reliable way to specify the input/output is to specify the full path e.g. hdfs://localhost:8020/user/...
  
--ot 
+	-ot 
 Specifies the output format schema. Options as -it (described above)
  
 FILTERS
 =======
  
- --post-filter (-pof) [GEO | LANG | GREP | DATE | RANDOM | IN_REPLY_TO]
-Define filters. Applied after other processing.
- --pre-filter (-prf) [GEO | LANG | GREP | DATE | RANDOM | IN_REPLY_TO]
-Define filters. Applied before other processing.
+ 	--post-filter (-pof) [GEO | LANG | GREP | DATE | RANDOM | IN_REPLY_TO] Define filters. Applied after other processing.
+ 	
+ 	--pre-filter (-prf) [GEO | LANG | GREP | DATE | RANDOM | IN_REPLY_TO] Define filters. Applied before other processing.
  
 OTHER
 =====
  
--rm
+	-rm
 If the output file exists, remove it
  
--ri
+	-ri
 The return immediately flag returns control to the system after sending the Map-Reduce job. Otherwise, the system waits for the Map-Reduce job to finish before running the following command.
  
---encoding
+	--encoding
 The encoding of the data is assumed to be UTF-8 unless specified otherwise using this option 
  
--t N
+	-t N
 time before skip. N seconds to wait before skipping an entry
  
--q quiet
--v verbose
+	-q 
+quiet
+	
+	-v 
+verbose
  
 SUPPORT FOR LZO
 ===============
