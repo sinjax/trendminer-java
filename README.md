@@ -193,6 +193,7 @@ verbose
 ## DESCRIBING THE MODES
  
 ### Tokenization
+
 	Usage:          -m TOKENISE
 	Description:   splits the input text into lists of tokens
 	Method:        our own tokenization tool that adapts to social media/Twitter conventions
@@ -204,6 +205,7 @@ verbose
 	  'protected' - a list of all tokens that are not words (e.g. hashtags, punctuation, emoticons, url's)
  
 ### Language identification
+
 	Usage:          -m LANG_ID
 	Description:   automatic language identification from the text of the input
 	Method:        using an implementation of the langid.py tool with the default trained model (97 languages)
@@ -215,6 +217,7 @@ verbose
 	   'language' - the 2 letter code for the detected language 
  
 ### Stemming
+
 	Usage:           -m PORTER_STEM
 	Description:     reduces each token in the input text to it's stem
 	Method:          stemming performed on the text with the Porter Stemmer (only for english texts)
