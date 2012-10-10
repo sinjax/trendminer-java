@@ -15,15 +15,15 @@ QUICK START
 
 ### Example 1. Running with input from the streaming API
 
-curl -u$TWUSER:$TWPASS https://stream.twitter.com/1/statuses/sample.json | java -jar TrendminerTool.jar -m TOKENISE -m LANG_ID -q
+	curl -u$TWUSER:$TWPASS https://stream.twitter.com/1/statuses/sample.json | java -jar TrendminerTool.jar -m TOKENISE -m LANG_ID -q
 
 ### Example 2. Processing a tweet file
 
-java -jar TrendminerTool.jar -m TOKENISE -m LANG_ID -m PORTER_STEM -i $TWFILE -o $TWFILEPROC -q
+	java -jar TrendminerTool.jar -m TOKENISE -m LANG_ID -m PORTER_STEM -i $TWFILE -o $TWFILEPROC -q
 
 ### Example 3. Processing in Map-Reduce
 
-hadoop jar HadoopTrendminerTool.jar -i $HDFS-INPUT -o $HDFS-OUTPUT -m TOKENISE -m LANG_ID -ri
+	hadoop jar HadoopTrendminerTool.jar -i $HDFS-INPUT -o $HDFS-OUTPUT -m TOKENISE -m LANG_ID -ri
  
 INSTALLATION
 ============
