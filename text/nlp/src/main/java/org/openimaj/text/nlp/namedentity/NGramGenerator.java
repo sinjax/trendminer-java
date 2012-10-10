@@ -77,7 +77,6 @@ public class NGramGenerator<T> {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// final String[] tokA = "#まひろ同盟".split(" ");
 		// final ArrayList<String> tokens = new
 		// ArrayList<String>(Arrays.asList(tokA));
 		final NGramGenerator<String> ngg = new StringNGramGenerator();
