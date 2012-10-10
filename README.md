@@ -200,33 +200,33 @@ DESCRIBING THE MODES
 ====================
  
 Tokenization
-Usage:          -m TOKENISE
-Description:   splits the input text into lists of tokens
-Method:        our own tokenization tool that adapts to social media/Twitter conventions
-Dependencies: - 
-Output:
-'tokens' field with 3 subfields:
-  'all' - a list of all tokens 
-  'unprotected' - a list of all word tokens
-  'protected' - a list of all tokens that are not words (e.g. hashtags, punctuation, emoticons, url's)
+	Usage:          -m TOKENISE
+	Description:   splits the input text into lists of tokens
+	Method:        our own tokenization tool that adapts to social media/Twitter conventions
+	Dependencies: - 
+	Output:
+	'tokens' field with 3 subfields:
+	  'all' - a list of all tokens 
+	  'unprotected' - a list of all word tokens
+	  'protected' - a list of all tokens that are not words (e.g. hashtags, punctuation, emoticons, url's)
  
 Language identification
-Usage:          -m LANG_ID
-Description:   automatic language identification from the text of the input
-Method:        using an implementation of the langid.py tool with the default trained model (97 languages)
-More on this in 'langid.py: An Off-the-shelf Language Identiﬁcation Tool' - Marco Lui, Timothy Baldwin
-Dependecies: -m TOKENISE (takes the input from the 'tokens'->'protected' field)
-Output:
-'langid' field with 2 subfields:
-   'confidence' - the confidence score for the prediction
-   'language' - the 2 letter code for the detected language 
+	Usage:          -m LANG_ID
+	Description:   automatic language identification from the text of the input
+	Method:        using an implementation of the langid.py tool with the default trained model (97 languages)
+	More on this in 'langid.py: An Off-the-shelf Language Identiﬁcation Tool' - Marco Lui, Timothy Baldwin
+	Dependecies: -m TOKENISE (takes the input from the 'tokens'->'protected' field)
+	Output:
+	'langid' field with 2 subfields:
+	   'confidence' - the confidence score for the prediction
+	   'language' - the 2 letter code for the detected language 
  
 Stemming
-Usage:           -m PORTER_STEM
-Description:     reduces each token in the input text to it's stem
-Method:          stemming performed on the text with the Porter Stemmer (only for english texts)
-Dependencies: -m TOKENISE (takes the input from the 'tokens'->'all' field)
-Output:           'stemmed' - a list with the stemmed tokens 
+	Usage:           -m PORTER_STEM
+	Description:     reduces each token in the input text to it's stem
+	Method:          stemming performed on the text with the Porter Stemmer (only for english texts)
+	Dependencies: -m TOKENISE (takes the input from the 'tokens'->'all' field)
+	Output:           'stemmed' - a list with the stemmed tokens 
  
 HOW TO ADD A MODE
 =================
