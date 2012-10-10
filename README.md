@@ -98,9 +98,8 @@ OPTIONS
  
 When ran with no options, help information is displayed.
 e.g. java -jar TrendminerTool.jar
- 
-MODES
-=====
+
+## MODES
  
 Modes are preprocessing steps that are applied in succession to the input.
 - when a mode is ran over an item (e.g. tweet), the output of the analysis is held in a separate 'analysis' data field and specific keys are added to this analysis construct like defined by each of the mode's descriptions
@@ -110,8 +109,7 @@ Modes are preprocessing steps that are applied in succession to the input.
 - some dependencies exist and are noted in the mode description below
 - this is the only compulsory option that the tool needs
  
-INPUT
-=====
+## INPUT
  
 We assume that the input files are one item/line in JSON format.
  
@@ -137,8 +135,7 @@ TWITTER
 USMF (Unified Social Media Format) is a data format that generalizes data extracted from social networks.
 It was devised by Tawlk and is presented here: https://github.com/Tawlk/hyve/wiki/Unified-Social-Media-Format-(USMF) (default setting)
  
-OUTPUT
-======
+## OUTPUT
  
 The tool can output to stdout (default setting) or to a file. The latter is activated with the flag -o filename 
  
@@ -160,15 +157,13 @@ Obs: if you have hdfs installed, we observed that the most reliable way to speci
 	-ot 
 Specifies the output format schema. Options as -it (described above)
  
-FILTERS
-=======
+## FILTERS
  
  	--post-filter (-pof) [GEO | LANG | GREP | DATE | RANDOM | IN_REPLY_TO] Define filters. Applied after other processing.
  	
  	--pre-filter (-prf) [GEO | LANG | GREP | DATE | RANDOM | IN_REPLY_TO] Define filters. Applied before other processing.
  
-OTHER
-=====
+## OTHER
  
 	-rm
 If the output file exists, remove it
@@ -188,18 +183,16 @@ quiet
 	-v 
 verbose
  
-SUPPORT FOR LZO
-===============
+## SUPPORT FOR LZO
  
 - the tool can take lzo input and output
 - this allows you to use compressed input/output while still processing in Map-Reduce
 - for the libraries that allow you to use lzo with Hadoop you should refer to: https://github.com/toddlipcon/hadoop-lzo 
 - before running the tool in Map-Reduce make sure that you have first indexed the files 
  
-DESCRIBING THE MODES
-====================
+## DESCRIBING THE MODES
  
-Tokenization
+### Tokenization
 	Usage:          -m TOKENISE
 	Description:   splits the input text into lists of tokens
 	Method:        our own tokenization tool that adapts to social media/Twitter conventions
@@ -210,7 +203,7 @@ Tokenization
 	  'unprotected' - a list of all word tokens
 	  'protected' - a list of all tokens that are not words (e.g. hashtags, punctuation, emoticons, url's)
  
-Language identification
+### Language identification
 	Usage:          -m LANG_ID
 	Description:   automatic language identification from the text of the input
 	Method:        using an implementation of the langid.py tool with the default trained model (97 languages)
@@ -221,7 +214,7 @@ Language identification
 	   'confidence' - the confidence score for the prediction
 	   'language' - the 2 letter code for the detected language 
  
-Stemming
+### Stemming
 	Usage:           -m PORTER_STEM
 	Description:     reduces each token in the input text to it's stem
 	Method:          stemming performed on the text with the Porter Stemmer (only for english texts)
