@@ -188,18 +188,6 @@
 	</build>
 	<repositories>
 		<repository>
-			<id>Octopussy maven repository</id>
-			<url>http://maven.ecs.soton.ac.uk/content/repositories/octopussy-thirdparty/</url>
-		</repository>
-		<repository>
-			<id>Octopussy maven releases repository</id>
-			<url>http://maven.ecs.soton.ac.uk/content/repositories/openimaj-releases/</url>
-		</repository>
-		<repository>
-			<id>Octopussy maven snapshots repository</id>
-			<url>http://maven.ecs.soton.ac.uk/content/repositories/openimaj-snapshots/</url>
-		</repository>
-		<repository>
 			<id>Twitter Maven</id>
 			<url>http://maven.twttr.com/</url>
 		</repository>
