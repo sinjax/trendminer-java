@@ -1,3 +1,32 @@
+/**
+ * Copyright (c) 2011, The University of Southampton and the individual contributors.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *   * 	Redistributions of source code must retain the above copyright notice,
+ * 	this list of conditions and the following disclaimer.
+ *
+ *   *	Redistributions in binary form must reproduce the above copyright notice,
+ * 	this list of conditions and the following disclaimer in the documentation
+ * 	and/or other materials provided with the distribution.
+ *
+ *   *	Neither the name of the University of Southampton nor the names of its
+ * 	contributors may be used to endorse or promote products derived from this
+ * 	software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package org.openimaj.text.nlp.sentiment.lexicon;
 
 import java.util.ArrayList;
@@ -6,8 +35,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.openimaj.ml.clustering.DoubleCentroidsResult;
-import org.openimaj.ml.clustering.assignment.hard.ExactDoubleAssigner;
-import org.openimaj.ml.clustering.kmeans.fast.FastDoubleKMeans;
+import org.openimaj.ml.clustering.assignment.HardAssigner;
+import org.openimaj.ml.clustering.kmeans.DoubleKMeans;
 import org.openimaj.text.nlp.textpipe.annotations.POSAnnotation;
 import org.openimaj.text.nlp.textpipe.annotations.RawTextAnnotation;
 import org.openimaj.text.nlp.textpipe.annotations.SentenceAnnotation;
@@ -16,6 +45,7 @@ import org.openimaj.text.nlp.textpipe.annotators.MissingRequiredAnnotationExcept
 import org.openimaj.text.nlp.textpipe.annotators.OpenNLPPOSAnnotator;
 import org.openimaj.text.nlp.textpipe.annotators.OpenNLPSentenceAnnotator;
 import org.openimaj.text.nlp.textpipe.annotators.OpenNLPTokenAnnotator;
+import org.openimaj.util.pair.IntDoublePair;
 
 /**
  * An implementation of Hatzivassiloglou and McKeown's approach to a
@@ -27,7 +57,7 @@ import org.openimaj.text.nlp.textpipe.annotators.OpenNLPTokenAnnotator;
  */
 public class TotalLexBuilder {
 	private HashMap<String, double[]> vectors;
-	private HashMap<String,Integer> assignments;
+	private HashMap<String, Integer> assignments;
 	private List<String> posConfirmation;
 	private List<String> negConfirmation;
 	private OpenNLPTokenAnnotator tokA;
@@ -38,11 +68,17 @@ public class TotalLexBuilder {
 
 	/**
 	 * Constructor.
-	 * @param posConfirmation = list of positive adjectives used to orientate the classification.
-	 * @param negConfirmation = list of negative adjectives used to orientate the classification.
+	 * 
+	 * @param posConfirmation
+	 *            = list of positive adjectives used to orientate the
+	 *            classification.
+	 * @param negConfirmation
+	 *            = list of negative adjectives used to orientate the
+	 *            classification.
 	 */
 	public TotalLexBuilder(List<String> posConfirmation,
-			List<String> negConfirmation) {
+			List<String> negConfirmation)
+	{
 		this.posConfirmation = posConfirmation;
 		this.negConfirmation = negConfirmation;
 		tokA = new OpenNLPTokenAnnotator();
@@ -53,12 +89,13 @@ public class TotalLexBuilder {
 
 	/**
 	 * Builds a Scored Sentiment mapping of adjectives from the corpus.
+	 * 
 	 * @param corpus
 	 * @return Scored Sentiment map of adjectives.
 	 */
 	public Map<String, Double> build(List<String> corpus) {
 		// Find all the adjective conjunctions.
-		for (String doc : corpus) {
+		for (final String doc : corpus) {
 			getAdjectiveConjunctions(doc, " and ");
 			getAdjectiveConjunctions(doc, " but ");
 		}
@@ -70,22 +107,21 @@ public class TotalLexBuilder {
 	}
 
 	private void cluster() {
-		FastDoubleKMeans fkm = new FastDoubleKMeans(counts.keySet().size(), 2,
-				true);
-		double[][] data = new double[counts.keySet().size()][];
+		final DoubleKMeans fkm = DoubleKMeans.createExact(counts.keySet().size(), 2);
+		final double[][] data = new double[counts.keySet().size()][];
 		int i = 0;
-		for (double[] ds : vectors.values()) {
+		for (final double[] ds : vectors.values()) {
 			data[i] = ds;
 			i++;
 		}
-		DoubleCentroidsResult cluster = fkm.cluster(data);
-		ExactDoubleAssigner assigner = new ExactDoubleAssigner(cluster);
+		final DoubleCentroidsResult cluster = fkm.cluster(data);
+		final HardAssigner<double[], double[], IntDoublePair> assigner = cluster.defaultHardAssigner();
 		assignments = new HashMap<String, Integer>();
-		for(String adj:vectors.keySet()){
+		for (final String adj : vectors.keySet()) {
 			assignments.put(adj, assigner.assign(vectors.get(adj)));
 		}
-		for(String adj: assignments.keySet()){
-			System.out.println(adj+" "+assignments.get(adj));
+		for (final String adj : assignments.keySet()) {
+			System.out.println(adj + " " + assignments.get(adj));
 		}
 	}
 
@@ -95,12 +131,12 @@ public class TotalLexBuilder {
 
 	private void buildVectors() {
 		vectors = new HashMap<String, double[]>();
-		for (String adj : counts.keySet()) {
+		for (final String adj : counts.keySet()) {
 			vectors.put(adj, new double[counts.keySet().size() * 2]);
-			HashMap<String, Counter> andCount = counts.get(adj).get(AND);
-			HashMap<String, Counter> butCount = counts.get(adj).get(BUT);
+			final HashMap<String, Counter> andCount = counts.get(adj).get(AND);
+			final HashMap<String, Counter> butCount = counts.get(adj).get(BUT);
 			int i = 0;
-			for (String adjInc : counts.keySet()) {
+			for (final String adjInc : counts.keySet()) {
 				if (andCount.containsKey(adjInc)) {
 					vectors.get(adj)[i] = andCount.get(adjInc).count;
 				} else {
@@ -120,24 +156,24 @@ public class TotalLexBuilder {
 	private void getAdjectiveConjunctions(String toSearch, String conjunction) {
 		String leftToSearch = toSearch;
 		if (leftToSearch.contains(conjunction)) {
-			RawTextAnnotation rta = new RawTextAnnotation(toSearch);
+			final RawTextAnnotation rta = new RawTextAnnotation(toSearch);
 			try {
 				sentA.annotate(rta);
 				tokA.annotate(rta);
 				posA.annotate(rta);
-			} catch (MissingRequiredAnnotationException e) {
+			} catch (final MissingRequiredAnnotationException e) {
 				e.printStackTrace();
 			}
-			List<SentenceAnnotation> sentences = rta
+			final List<SentenceAnnotation> sentences = rta
 					.getAnnotationsFor(SentenceAnnotation.class);
 			int searchedIndex = 0;
 			int sentI = 0;
 			while (leftToSearch.contains(conjunction)) {
-				int loc = leftToSearch.indexOf(conjunction) + 1 + searchedIndex;
+				final int loc = leftToSearch.indexOf(conjunction) + 1 + searchedIndex;
 				List<TokenAnnotation> tokens = null;
 				int t = 0;
 				searchloop: for (int s = sentI; s < sentences.size(); s++) {
-					SentenceAnnotation sentence = sentences.get(s);
+					final SentenceAnnotation sentence = sentences.get(s);
 					if (sentence.start < loc && sentence.stop > loc) {
 						tokens = sentence
 								.getAnnotationsFor(TokenAnnotation.class);
@@ -150,7 +186,7 @@ public class TotalLexBuilder {
 					sentI++;
 				}
 				if (tokens != null) {
-					int c = (conjunction.trim().equals("and")) ? AND : BUT;
+					final int c = (conjunction.trim().equals("and")) ? AND : BUT;
 					checkForConjunctionGroup(tokens, t, c);
 				}
 				searchedIndex = loc + conjunction.length() - 1;
@@ -160,14 +196,16 @@ public class TotalLexBuilder {
 	}
 
 	private void checkForConjunctionGroup(List<TokenAnnotation> tokens,
-			int conjunctionIndex, int conjunction) {
+			int conjunctionIndex, int conjunction)
+	{
 		if (tokens.size() > conjunctionIndex + 1
 				&& tokens.get(conjunctionIndex - 1)
 						.getAnnotationsFor(POSAnnotation.class).get(0).pos
 						.toString().contains("JJ")
 				&& tokens.get(conjunctionIndex + 1)
 						.getAnnotationsFor(POSAnnotation.class).get(0).pos
-						.toString().contains("JJ")) {
+						.toString().contains("JJ"))
+		{
 
 			System.out.println(tokens.get(conjunctionIndex - 1)
 					.getStringToken()
@@ -176,21 +214,21 @@ public class TotalLexBuilder {
 					+ " "
 					+ tokens.get(conjunctionIndex + 1).getStringToken());
 
-			List<String> adjectives = new ArrayList<String>();
+			final List<String> adjectives = new ArrayList<String>();
 			adjectives.add(tokens.get(conjunctionIndex - 1).getStringToken());
 			adjectives.add(tokens.get(conjunctionIndex + 1).getStringToken());
 			for (int i = 0; i < adjectives.size(); i++) {
-				String vecAdj = adjectives.get(i);
+				final String vecAdj = adjectives.get(i);
 				if (!counts.keySet().contains(vecAdj)) {
-					ArrayList<HashMap<String, Counter>> cons = new ArrayList<HashMap<String, Counter>>();
+					final ArrayList<HashMap<String, Counter>> cons = new ArrayList<HashMap<String, Counter>>();
 					cons.add(new HashMap<String, Counter>());
 					cons.add(new HashMap<String, Counter>());
 					counts.put(vecAdj, cons);
 				}
-				HashMap<String, Counter> conVector = counts.get(vecAdj).get(
+				final HashMap<String, Counter> conVector = counts.get(vecAdj).get(
 						conjunction);
 				for (int j = 0; j < adjectives.size(); j++) {
-					String incAdj = adjectives.get(j);
+					final String incAdj = adjectives.get(j);
 					if (!conVector.containsKey(incAdj)) {
 						conVector.put(incAdj, new Counter());
 					} else
@@ -202,8 +240,9 @@ public class TotalLexBuilder {
 
 	/**
 	 * Easily incremented object for counting.
+	 * 
 	 * @author laurence
-	 *
+	 * 
 	 */
 	public class Counter {
 		@SuppressWarnings("javadoc")
@@ -226,9 +265,9 @@ public class TotalLexBuilder {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		ArrayList<String> pos = new ArrayList<String>();
-		ArrayList<String> neg = new ArrayList<String>();
-		ArrayList<String> corpus = new ArrayList<String>();
+		final ArrayList<String> pos = new ArrayList<String>();
+		final ArrayList<String> neg = new ArrayList<String>();
+		final ArrayList<String> corpus = new ArrayList<String>();
 		pos.add("dandy");
 		neg.add("horrible");
 
@@ -238,11 +277,11 @@ public class TotalLexBuilder {
 				+ "Unless a dandy but horrible wolf came along. "
 				+ "Then we would be  be warm but sad inside. "
 				+ "Our only option would be to offer the sad and horrible wolf the opportunity to be warm and dandy." +
-				"warm and fine. dandy and warm. fine but horrible. dandy but sad. sad and horrible."+
+				"warm and fine. dandy and warm. fine but horrible. dandy but sad. sad and horrible." +
 				"fine and warm, fine and dandy, fine and warm, fine and dandy");
 
 		// corpus.add("fine and warm");
-		TotalLexBuilder b = new TotalLexBuilder(pos, neg);
+		final TotalLexBuilder b = new TotalLexBuilder(pos, neg);
 		b.build(corpus);
 	}
 

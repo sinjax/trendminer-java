@@ -37,9 +37,11 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Scanner;
 
+import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.openimaj.io.IOUtils;
 
 import com.google.gson.Gson;
 
@@ -50,10 +52,12 @@ import com.google.gson.Gson;
  * read from JSON and convert to USMF. Translation from alternative JSON sources
  * relies on the extension of the GeneralJSON class for that format.
  *
- * @author Jonathon Hare (jsh2@ecs.soton.ac.uk), Sina Samangooei (ss@ecs.soton.ac.uk), Laurence Willmore (lgw1e10@ecs.soton.ac.uk)
+ * @author Jonathon Hare (jsh2@ecs.soton.ac.uk), Sina Samangooei
+ *         (ss@ecs.soton.ac.uk), Laurence Willmore (lgw1e10@ecs.soton.ac.uk)
  *
  */
-public class USMFStatus extends GeneralJSON implements Cloneable{
+public class USMFStatus extends GeneralJSON implements Cloneable {
+	private static final Logger logger = Logger.getLogger(USMFStatus.class);
 	private transient Class<? extends GeneralJSON> generalJSONclass; // class of
 																		// the
 																		// source.
@@ -156,7 +160,6 @@ public class USMFStatus extends GeneralJSON implements Cloneable{
 	 */
 	public ArrayList<Link> links;
 
-
 	private boolean invalid = false;
 
 	/**
@@ -185,16 +188,20 @@ public class USMFStatus extends GeneralJSON implements Cloneable{
 	}
 
 	/**
-	 * @return the type of json that backs this instance (used primarily for reading)
+	 * @return the type of json that backs this instance (used primarily for
+	 *         reading)
 	 */
-	public Class<? extends GeneralJSON> getGeneralJSONClass(){
+	public Class<? extends GeneralJSON> getGeneralJSONClass() {
 		return this.generalJSONclass;
 	}
+
 	/**
-	 * set the type of json that backs this instance (used primarily for reading)
+	 * set the type of json that backs this instance (used primarily for
+	 * reading)
+	 *
 	 * @param g
 	 */
-	public void setGeneralJSONClass(Class<? extends GeneralJSON> g){
+	public void setGeneralJSONClass(Class<? extends GeneralJSON> g) {
 		this.generalJSONclass = g;
 	}
 
@@ -212,7 +219,6 @@ public class USMFStatus extends GeneralJSON implements Cloneable{
 		fillFromString(line);
 	}
 
-
 	/**
 	 * Used by readASCII(), and available for external use to fill this
 	 * USMFStatus with the information held in the line
@@ -225,10 +231,12 @@ public class USMFStatus extends GeneralJSON implements Cloneable{
 	public void fillFromString(String line) {
 		GeneralJSON jsonInstance = null;
 		try {
-			jsonInstance = gson.fromJson(line, generalJSONclass);
+			jsonInstance = IOUtils.newInstance(generalJSONclass);
+			jsonInstance = jsonInstance.instanceFromString(line);
 		} catch (Throwable e) {
-			// Could not parse the line, invalid json.
+			logger.debug("Error parsing USMF: " + e.getMessage());
 		}
+
 		if (jsonInstance == null) {
 			this.text = line;
 		} else {
@@ -240,6 +248,17 @@ public class USMFStatus extends GeneralJSON implements Cloneable{
 			return;
 		}
 		this.invalid = false;
+	}
+
+	@Override
+	public GeneralJSON instanceFromString(String line){
+		GeneralJSON jsonInstance = null;
+		try {
+			jsonInstance = gson.fromJson(line, generalJSONclass);
+		} catch (Throwable e) {
+			logger.debug("Error parsing USMF: " + e.getMessage());
+		}
+		return jsonInstance;
 	}
 
 	/*
@@ -268,7 +287,7 @@ public class USMFStatus extends GeneralJSON implements Cloneable{
 	/**
 	 * @return convert this {@link USMFStatus} to JSON using {@link Gson}
 	 */
-	public String toJson(){
+	public String toJson() {
 		return gson.toJson(this, this.getClass());
 	}
 
@@ -364,6 +383,7 @@ public class USMFStatus extends GeneralJSON implements Cloneable{
 
 	/**
 	 * Container object to hold user information
+	 *
 	 * @author laurence
 	 *
 	 */
@@ -455,6 +475,7 @@ public class USMFStatus extends GeneralJSON implements Cloneable{
 
 	/**
 	 * Container object for holding link information
+	 *
 	 * @author laurence
 	 *
 	 */

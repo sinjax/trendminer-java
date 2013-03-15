@@ -1,3 +1,32 @@
+/**
+ * Copyright (c) 2011, The University of Southampton and the individual contributors.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *   * 	Redistributions of source code must retain the above copyright notice,
+ * 	this list of conditions and the following disclaimer.
+ *
+ *   *	Redistributions in binary form must reproduce the above copyright notice,
+ * 	this list of conditions and the following disclaimer in the documentation
+ * 	and/or other materials provided with the distribution.
+ *
+ *   *	Neither the name of the University of Southampton nor the names of its
+ * 	contributors may be used to endorse or promote products derived from this
+ * 	software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package org.openimaj.ml.annotation.basic;
 
 import gnu.trove.iterator.TObjectIntIterator;
@@ -39,11 +68,11 @@ public class KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR extends FeatureExtractor
 		IncrementalAnnotator<OBJECT, ANNOTATION, EXTRACTOR>
 {
 	private int k = 1;
-	private List<FEATURE> features = new ArrayList<FEATURE>();
-	private List<Collection<ANNOTATION>> annotations = new ArrayList<Collection<ANNOTATION>>();
-	private Set<ANNOTATION> annotationsSet = new HashSet<ANNOTATION>();
+	private final List<FEATURE> features = new ArrayList<FEATURE>();
+	private final List<Collection<ANNOTATION>> annotations = new ArrayList<Collection<ANNOTATION>>();
+	private final Set<ANNOTATION> annotationsSet = new HashSet<ANNOTATION>();
 	private ObjectNearestNeighbours<FEATURE> nn;
-	private DistanceComparator<FEATURE> comparator;
+	private DistanceComparator<? super FEATURE> comparator;
 	private float threshold = 0;
 
 	/**
@@ -61,7 +90,7 @@ public class KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR extends FeatureExtractor
 	 * @param threshold
 	 *            the threshold for successful matches
 	 */
-	public KNNAnnotator(EXTRACTOR extractor, DistanceComparator<FEATURE> comparator, float threshold) {
+	public KNNAnnotator(final EXTRACTOR extractor, final DistanceComparator<? super FEATURE> comparator, final float threshold) {
 		this(extractor, comparator, 1, threshold);
 	}
 
@@ -74,7 +103,7 @@ public class KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR extends FeatureExtractor
 	 * @param comparator
 	 *            the comparator
 	 */
-	public KNNAnnotator(EXTRACTOR extractor, DistanceComparator<FEATURE> comparator) {
+	public KNNAnnotator(final EXTRACTOR extractor, final DistanceComparator<? super FEATURE> comparator) {
 		this(extractor, comparator, 1, comparator.isDistance() ? Float.MAX_VALUE : -Float.MAX_VALUE);
 	}
 
@@ -89,7 +118,7 @@ public class KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR extends FeatureExtractor
 	 * @param k
 	 *            the number of neighbours
 	 */
-	public KNNAnnotator(EXTRACTOR extractor, DistanceComparator<FEATURE> comparator, int k) {
+	public KNNAnnotator(final EXTRACTOR extractor, final DistanceComparator<? super FEATURE> comparator, final int k) {
 		this(extractor, comparator, k, comparator.isDistance() ? Float.MAX_VALUE : -Float.MAX_VALUE);
 	}
 
@@ -110,7 +139,7 @@ public class KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR extends FeatureExtractor
 	 * @param threshold
 	 *            the threshold for successful matches
 	 */
-	public KNNAnnotator(EXTRACTOR extractor, DistanceComparator<FEATURE> comparator, int k, float threshold) {
+	public KNNAnnotator(final EXTRACTOR extractor, final DistanceComparator<? super FEATURE> comparator, final int k, final float threshold) {
 		super(extractor);
 		this.comparator = comparator;
 		this.k = k;
@@ -143,8 +172,8 @@ public class KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR extends FeatureExtractor
 	 * @return new {@link KNNAnnotator}
 	 */
 	public static <OBJECT, ANNOTATION, EXTRACTOR extends FeatureExtractor<FEATURE, OBJECT>, FEATURE>
-			KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR, FEATURE> create(EXTRACTOR extractor,
-					DistanceComparator<FEATURE> comparator, float threshold)
+			KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR, FEATURE> create(final EXTRACTOR extractor,
+					final DistanceComparator<FEATURE> comparator, final float threshold)
 	{
 		return new KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR, FEATURE>(
 				extractor, comparator, threshold);
@@ -171,8 +200,8 @@ public class KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR extends FeatureExtractor
 	 * @return new {@link KNNAnnotator}
 	 */
 	public static <OBJECT, ANNOTATION, EXTRACTOR extends FeatureExtractor<FEATURE, OBJECT>, FEATURE>
-			KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR, FEATURE> create(EXTRACTOR extractor,
-					DistanceComparator<FEATURE> comparator)
+			KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR, FEATURE> create(final EXTRACTOR extractor,
+					final DistanceComparator<FEATURE> comparator)
 	{
 		return new KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR, FEATURE>(
 				extractor, comparator);
@@ -200,8 +229,8 @@ public class KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR extends FeatureExtractor
 	 * @return new {@link KNNAnnotator}
 	 */
 	public static <OBJECT, ANNOTATION, EXTRACTOR extends FeatureExtractor<FEATURE, OBJECT>, FEATURE>
-			KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR, FEATURE> create(EXTRACTOR extractor,
-					DistanceComparator<FEATURE> comparator, int k)
+			KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR, FEATURE> create(final EXTRACTOR extractor,
+					final DistanceComparator<FEATURE> comparator, final int k)
 	{
 		return new KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR, FEATURE>(
 				extractor, comparator, k);
@@ -235,66 +264,66 @@ public class KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR extends FeatureExtractor
 	 * @return new {@link KNNAnnotator}
 	 */
 	public static <OBJECT, ANNOTATION, EXTRACTOR extends FeatureExtractor<FEATURE, OBJECT>, FEATURE>
-			KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR, FEATURE> create(EXTRACTOR extractor,
-					DistanceComparator<FEATURE> comparator, int k, float threshold)
+			KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR, FEATURE> create(final EXTRACTOR extractor,
+					final DistanceComparator<FEATURE> comparator, final int k, final float threshold)
 	{
 		return new KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR, FEATURE>(
 				extractor, comparator, k, threshold);
 	}
 
 	@Override
-	public void train(Annotated<OBJECT, ANNOTATION> annotated) {
-		nn = null;
+	public void train(final Annotated<OBJECT, ANNOTATION> annotated) {
+		this.nn = null;
 
-		features.add(extractor.extractFeature(annotated.getObject()));
+		this.features.add(this.extractor.extractFeature(annotated.getObject()));
 
 		final Collection<ANNOTATION> anns = annotated.getAnnotations();
-		annotations.add(anns);
-		annotationsSet.addAll(anns);
+		this.annotations.add(anns);
+		this.annotationsSet.addAll(anns);
 	}
 
 	@Override
 	public void reset() {
-		nn = null;
-		features.clear();
-		annotations.clear();
-		annotationsSet.clear();
+		this.nn = null;
+		this.features.clear();
+		this.annotations.clear();
+		this.annotationsSet.clear();
 	}
 
 	@Override
 	public Set<ANNOTATION> getAnnotations() {
-		return annotationsSet;
+		return this.annotationsSet;
 	}
 
 	@Override
-	public List<ScoredAnnotation<ANNOTATION>> annotate(OBJECT object) {
-		if (nn == null)
-			nn = new ObjectNearestNeighboursExact<FEATURE>(features, comparator);
+	public List<ScoredAnnotation<ANNOTATION>> annotate(final OBJECT object) {
+		if (this.nn == null)
+			this.nn = new ObjectNearestNeighboursExact<FEATURE>(this.features, this.comparator);
 
 		final TObjectIntHashMap<ANNOTATION> selected = new TObjectIntHashMap<ANNOTATION>();
 
 		final List<FEATURE> queryfv = new ArrayList<FEATURE>(1);
-		queryfv.add(extractor.extractFeature(object));
+		queryfv.add(this.extractor.extractFeature(object));
 
-		final int[][] indices = new int[1][k];
-		final float[][] distances = new float[1][k];
+		final int[][] indices = new int[1][this.k];
+		final float[][] distances = new float[1][this.k];
 
-		nn.searchKNN(queryfv, k, indices, distances);
+		this.nn.searchKNN(queryfv, this.k, indices, distances);
 
 		int count = 0;
-		for (int i = 0; i < k; i++) {
+		for (int i = 0; i < this.k; i++) {
 			// Distance check
-			if (comparator.isDistance()) {
-				if (distances[0][i] > threshold) {
+			if (this.comparator.isDistance()) {
+				if (distances[0][i] > this.threshold) {
 					continue;
 				}
 			} else {
-				if (distances[0][i] < threshold) {
+				if (distances[0][i] < this.threshold) {
 					continue;
 				}
 			}
 
-			final Collection<ANNOTATION> anns = annotations.get(indices[0][i]);
+			final Collection<ANNOTATION> anns = this.annotations.get(indices[0][i]);
 
 			for (final ANNOTATION ann : anns) {
 				selected.adjustOrPutValue(ann, 1, 1);
@@ -317,7 +346,7 @@ public class KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR extends FeatureExtractor
 	 * @return the number of neighbours to search for
 	 */
 	public int getK() {
-		return k;
+		return this.k;
 	}
 
 	/**
@@ -326,7 +355,7 @@ public class KNNAnnotator<OBJECT, ANNOTATION, EXTRACTOR extends FeatureExtractor
 	 * @param k
 	 *            the number of neighbours
 	 */
-	public void setK(int k) {
+	public void setK(final int k) {
 		this.k = k;
 	}
 }
