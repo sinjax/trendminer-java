@@ -37,7 +37,7 @@
 		<dependency>
 			<groupId>org.openimaj.tools</groupId>
 			<artifactId>core-tool</artifactId>
-			<version>1.0.6-SNAPSHOT</version>
+			<version>${openimajversion}</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>

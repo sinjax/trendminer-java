@@ -44,4 +44,5 @@
 			<url>http://snapshots.openimaj.org/</url>
 		</repository>
 	</repositories>
+	 <properties><openimajversion>1.1.1-SNAPSHOT</openimajversion></properties>
 </project>
