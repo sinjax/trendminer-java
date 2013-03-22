@@ -121,9 +121,10 @@ public class BiconvexDataGenerator implements DataGenerator<Matrix>{
 		if (indw && indu){
 			y = smf.createMatrix(1, ntasks);
 			for (int i = 0; i < this.ntasks; i++) {
-				Matrix subu = this.u.getSubMatrix(0, nusers, i, i+1);
-				Matrix subw = this.w.getSubMatrix(0, nfeatures, i, i+1);
-				y.setSubMatrix(0, i, calcY(subu,x,subw));
+				Matrix subu = this.u.getSubMatrix(0, nusers-1, i, i);
+				Matrix subw = this.w.getSubMatrix(0, nfeatures-1, i, i);
+				Matrix yval = calcY(subu,x,subw);
+				y.setSubMatrix(0, i, yval);
 			}
 		}else{
 			y = calcY(u,x,w);

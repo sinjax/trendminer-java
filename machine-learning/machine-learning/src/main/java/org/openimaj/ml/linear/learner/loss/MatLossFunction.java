@@ -27,8 +27,11 @@ public class MatLossFunction extends LossFunction{
 	@Override
 	public Matrix gradient(Matrix W) {
 		SparseMatrix ret = spf.createMatrix(W.getNumRows(), W.getNumColumns());
+		int allRowsY = Y.getNumRows()-1;
+		int allRowsW = W.getNumRows()-1;
 		for (int i = 0; i < Y.getNumColumns(); i++) {
-			Matrix submatrix = f.gradient(W);
+			this.f.setY(Y.getSubMatrix(0, allRowsY, i, i));
+			Matrix submatrix = f.gradient(W.getSubMatrix(0, allRowsW, i, i));
 			ret.setSubMatrix(0, i, submatrix);
 		}
 		return ret;

@@ -8,12 +8,10 @@ public class SquareMissingLossFunction extends LossFunction{
 	@Override
 	public Matrix gradient(Matrix W) {
 		Matrix resid = X.times(W).minus(Y);
-		Vector zeroVect = Y.getRow(0);
-		zeroVect.zero();
-		for (int c = 0; c < Y.getNumRows(); c++) {
-			double yc = Y.getElement(0, c);
+		for (int r = 0; r < Y.getNumRows(); r++) {
+			double yc = Y.getElement(r, 0);
 			if(Double.isNaN(yc)){
-				resid.setRow(c, zeroVect);
+				resid.setElement(r,0, 0);
 			}
 		}
 		return X.transpose().times(resid);
