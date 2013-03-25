@@ -1,6 +1,7 @@
 package org.openimaj.ml.linear.data;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
+import gov.sandia.cognition.math.matrix.Matrix;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,10 +9,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import gov.sandia.cognition.math.matrix.Matrix;
-
 import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -21,7 +19,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.openimaj.io.FileUtils;
 import org.openimaj.ml.linear.learner.BilinearSparseOnlineLearner;
-import org.openimaj.ml.linear.learner.init.MatlabFileInitStrat;
 import org.openimaj.util.pair.Pair;
 
 public class BilinearSparseOnlineLearnerTest {

@@ -1,15 +1,14 @@
 package org.openimaj.ml.linear.learner;
 
-import java.util.List;
-import java.util.Random;
-
 import gov.sandia.cognition.math.matrix.Matrix;
 import gov.sandia.cognition.math.matrix.mtj.SparseMatrix;
 import gov.sandia.cognition.math.matrix.mtj.SparseMatrixFactoryMTJ;
 
+import java.util.List;
+import java.util.Random;
+
 import org.apache.log4j.Logger;
 import org.openimaj.math.matrix.SandiaMatrixUtils;
-import org.openimaj.ml.annotation.Annotator;
 import org.openimaj.ml.linear.learner.init.InitStrategy;
 import org.openimaj.ml.linear.learner.init.SparseRandomInitStrategy;
 import org.openimaj.ml.linear.learner.loss.LossFunction;
