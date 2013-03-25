@@ -9,6 +9,7 @@ import gov.sandia.cognition.math.matrix.mtj.SparseMatrixFactoryMTJ;
 
 import org.apache.log4j.Logger;
 import org.openimaj.math.matrix.SandiaMatrixUtils;
+import org.openimaj.ml.annotation.Annotator;
 import org.openimaj.ml.linear.learner.init.InitStrategy;
 import org.openimaj.ml.linear.learner.init.SparseRandomInitStrategy;
 import org.openimaj.ml.linear.learner.loss.LossFunction;
@@ -203,5 +204,13 @@ public class BilinearSparseOnlineLearner {
 	}
 	public BilinearLearnerParameters getParams() {
 		return this.params;
+	}
+	
+	public Matrix getU(){
+		return this.u;
+	}
+	
+	public Matrix getW(){
+		return this.w;
 	}
 }

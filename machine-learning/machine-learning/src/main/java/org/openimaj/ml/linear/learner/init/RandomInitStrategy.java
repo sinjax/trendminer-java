@@ -6,12 +6,12 @@ import gov.sandia.cognition.math.matrix.Matrix;
 import gov.sandia.cognition.math.matrix.MatrixFactory;
 import gov.sandia.cognition.math.matrix.mtj.SparseMatrixFactoryMTJ;
 
-public class SparseRandomInitStrategy implements InitStrategy{
-	MatrixFactory<? extends Matrix> smf = MatrixFactory.getSparseDefault();
+public class RandomInitStrategy implements InitStrategy{
+	MatrixFactory<? extends Matrix> smf = MatrixFactory.getDenseDefault();
 	private double min;
 	private double max;
 	private Random random;
-	public SparseRandomInitStrategy(double min,double max, Random random) {
+	public RandomInitStrategy(double min,double max, Random random) {
 		this.min = min;
 		this.max = max;
 		this.random = random;
