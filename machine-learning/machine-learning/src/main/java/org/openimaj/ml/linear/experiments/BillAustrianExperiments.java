@@ -54,11 +54,11 @@ public class BillAustrianExperiments {
 				if(next == null) break;
 				System.out.println("...trying item "+j++);
 				learner.process(next.firstObject(), next.secondObject());
+				double loss = BilinearSparseOnlineLearner.sumLoss(testpairs, learner.getU(), learner.getW(), learner.getParams());
+				System.out.println(String.format("... loss: %f",loss));
 			}
 			
-			double loss = BilinearSparseOnlineLearner.sumLoss(testpairs, learner.getU(), learner.getW(), learner.getParams());
 			
-			System.out.println(String.format("Fold %d, Loss: %f",i,loss));
 		}
 
 	}
