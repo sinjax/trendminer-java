@@ -71,7 +71,6 @@ public class BillMatlabFileDataGenerator implements DataGenerator<Matrix>{
 		this.ndays = ndays;
 		this.content = reader.getContent();
 		this.currentIndex = 0;
-		printContent();
 		prepareFolds();
 		prepareDayUserWords();
 		prepareDayPolls();
@@ -158,15 +157,6 @@ public class BillMatlabFileDataGenerator implements DataGenerator<Matrix>{
 			arr[i] = training.get(0, i).intValue();
 		}
 		return arr;
-	}
-
-	private void printContent() {
-		for (Entry<String, MLArray> ent : content.entrySet()) {
-			System.out.println("Entry");
-			System.out.println("=====");
-			System.out.println(ent.getKey());
-			System.out.println("=====");
-		}
 	}
 
 	@Override

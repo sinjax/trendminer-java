@@ -11,13 +11,18 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+import org.openimaj.math.matrix.MatrixUtils;
+import org.openimaj.math.matrix.SandiaMatrixUtils;
 import org.openimaj.ml.linear.data.BillMatlabFileDataGenerator;
 import org.openimaj.ml.linear.data.BillMatlabFileDataGenerator.Mode;
 import org.openimaj.ml.linear.learner.BilinearSparseOnlineLearner;
+import org.openimaj.ml.linear.learner.BilinearSparseOnlineLearner.BilinearLearnerParameters;
+import org.openimaj.ml.linear.learner.init.OnesInitStrategy;
+import org.openimaj.ml.linear.learner.init.ZerosInitStrategy;
 import org.openimaj.util.pair.Pair;
 
 public class BillAustrianExperiments {
-	private static final String BILL_DATA = "/Users/ss/Dropbox/TrendMiner/deliverables/year2-"
+	private static final String BILL_DATA = "/home/ss/Dropbox/TrendMiner/deliverables/year2-"
 			+ "18month/Austrian Data/data.mat";
 	
 	
@@ -25,7 +30,7 @@ public class BillAustrianExperiments {
 	private static void pre() {
 		ConsoleAppender console = new ConsoleAppender(); //create appender
 		//configure the appender
-		String PATTERN = "%d [%p|%c|%C{1}] %m%n";
+		String PATTERN = "[%p->%C{1}] %m%n";
 		console.setLayout(new PatternLayout(PATTERN)); 
 		console.setThreshold(Level.DEBUG);
 		console.activateOptions();
@@ -39,6 +44,17 @@ public class BillAustrianExperiments {
 		for (int i = 0; i < bmfdg.nFolds(); i++) {
 			System.out.println("Fold: " + i);
 			BilinearSparseOnlineLearner learner = new BilinearSparseOnlineLearner();
+			
+			BilinearLearnerParameters params = learner.getParams();
+			params.put(BilinearLearnerParameters.ETA0, 0.0002);
+			params.put(BilinearLearnerParameters.LAMBDA, 0.0001);
+			params.put(BilinearLearnerParameters.BICONVEX_TOL, 0.01);
+			params.put(BilinearLearnerParameters.BICONVEX_MAXITER, 100);
+			params.put(BilinearLearnerParameters.BIAS, false);
+			params.put(BilinearLearnerParameters.WINITSTRAT, new OnesInitStrategy());
+			params.put(BilinearLearnerParameters.UINITSTRAT, new ZerosInitStrategy());
+			learner.reinitParams();
+			
 			bmfdg.setFold(i, Mode.TEST);
 			List<Pair<Matrix>> testpairs = new ArrayList<Pair<Matrix>>(); 
 			while(true){
@@ -54,7 +70,14 @@ public class BillAustrianExperiments {
 				if(next == null) break;
 				System.out.println("...trying item "+j++);
 				learner.process(next.firstObject(), next.secondObject());
-				double loss = BilinearSparseOnlineLearner.sumLoss(testpairs, learner.getU(), learner.getW(), learner.getParams());
+				Matrix u = learner.getU();
+				Matrix w = learner.getW();
+//				System.out.println("W: " + w);
+//				System.out.println("U: " + u);
+				
+				double loss = BilinearSparseOnlineLearner.sumLoss(testpairs, u, w, learner.getParams());
+				System.out.println("W sparcity: " + SandiaMatrixUtils.rowSparcity(w));
+				System.out.println("U sparcity: " + SandiaMatrixUtils.rowSparcity(u));
 				System.out.println(String.format("... loss: %f",loss));
 			}
 			
