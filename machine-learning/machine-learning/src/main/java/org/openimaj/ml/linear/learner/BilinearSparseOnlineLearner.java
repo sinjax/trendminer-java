@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import org.openimaj.math.matrix.SandiaMatrixUtils;
 import org.openimaj.ml.linear.learner.init.InitStrategy;
 import org.openimaj.ml.linear.learner.init.SparseRandomInitStrategy;
+import org.openimaj.ml.linear.learner.init.ZerosInitStrategy;
 import org.openimaj.ml.linear.learner.loss.LossFunction;
 import org.openimaj.ml.linear.learner.loss.MatLossFunction;
 import org.openimaj.ml.linear.learner.loss.SquareMissingLossFunction;
@@ -67,6 +68,10 @@ public class BilinearSparseOnlineLearner {
 		 */
 		public static final String UINITSTRAT = "uinitstrat";
 		/**
+		 * Defaults to a {@link ZerosInitStrategy}
+		 */
+		public static final String BIASINITSTRAT = "biasinitstrat";
+		/**
 		 * Defaults to 1 (currently this is ignored)
 		 */
 		public static final String BATCHSIZE = "batchsize";
@@ -103,6 +108,7 @@ public class BilinearSparseOnlineLearner {
 		 * The regularisation function, defaults to {@link L1L2Regulariser}
 		 */
 		public static final String REGUL = "regul";
+		
 		/**
 		 * 
 		 */
@@ -121,6 +127,7 @@ public class BilinearSparseOnlineLearner {
 			this.defaults.put(UINITSTRAT, new SparseRandomInitStrategy(0,1,0.5,new Random()));
 			this.defaults.put(BATCHSIZE, 1); // Currently ignored
 			this.defaults.put(BIAS, false);
+			this.defaults.put(BIASINITSTRAT, new ZerosInitStrategy());
 		}
 		
 		
@@ -134,7 +141,8 @@ public class BilinearSparseOnlineLearner {
 	private LossFunction loss;
 	private Regulariser regul;
 	private double lambda;
-	private boolean bias;
+	private boolean biasMode;
+	private Matrix bias;
 	
 	public BilinearSparseOnlineLearner() {
 		this(new BilinearLearnerParameters());
@@ -150,42 +158,37 @@ public class BilinearSparseOnlineLearner {
 		this.loss = this.params.getTyped(BilinearLearnerParameters.LOSS);
 		this.regul = this.params.getTyped(BilinearLearnerParameters.REGUL);
 		this.lambda = this.params.getTyped(BilinearLearnerParameters.LAMBDA);
-		this.bias = this.params.getTyped(BilinearLearnerParameters.BIAS);
+		this.biasMode = this.params.getTyped(BilinearLearnerParameters.BIAS);
 		
 		if(indw && indu){
 			this.loss = new MatLossFunction(this.loss);
 		}
 	}
-	private void initUW(int xrows, int xcols, int ycols) {
+	private void initParams(int xrows, int xcols, int ycols) {
 		InitStrategy wstrat = this.params.getTyped(BilinearLearnerParameters.WINITSTRAT);
 		InitStrategy ustrat = this.params.getTyped(BilinearLearnerParameters.UINITSTRAT);
+		
 		if(indw) this.w = wstrat.init(xrows, ycols);
 		else this.w = wstrat.init(xrows, 1);
 		if(indu) this.u = ustrat.init(xcols, ycols);
 		else this.u = ustrat.init(xcols, 1);
+		
+		this.bias = smf.createMatrix(ycols,ycols);
+		if(this.biasMode){			
+			InitStrategy bstrat = this.params.getTyped(BilinearLearnerParameters.BIASINITSTRAT);
+			this.bias = bstrat.init(ycols, ycols);
+		}
 	}
 	
 	public void process(Matrix X, Matrix Y){
 		int nfeatures = X.getNumRows();
 		int nusers = X.getNumColumns();
-		if(this.bias){
-			nfeatures+=1;
-			nusers+=1;
-			SparseMatrix newX = SparseMatrixFactoryMTJ.INSTANCE.createMatrix(nfeatures, nusers);
-			for (int i = 0; i < nfeatures; i++) {
-				newX.setElement(i, 0, 1);
-			}
-			for (int i = 0; i < nusers; i++) {
-				newX.setElement(0, i, 1);
-			}
-			newX.setSubMatrix(1, 1, X);
-			X = newX;
-		}
-		
 		int ntasks = Y.getNumColumns();
 //		int ninstances = Y.getNumRows(); // Assume 1 instance!
+
+		// only inits when the current params is null
 		if (this.w == null){
-			initUW(nfeatures, nusers, ntasks); // Number of words, users and tasks
+			initParams(nfeatures, nusers, ntasks); // Number of words, users and tasks	
 		}
 		
 		if(indw && indu){ // Both u and w have a column per task
@@ -196,27 +199,27 @@ public class BilinearSparseOnlineLearner {
 			int iter = 0;
 			while(true) {
 				iter += 1;
-				
+				// If we're in bias mode, reset the bias
+				if(this.biasMode) loss.setBias(this.bias);
 				
 				// Vprime is nwords x tasks
 				Matrix Vprime = X.transpose().times(this.w);
-				
 				loss.setX(Vprime.transpose());
 				Matrix gradU = loss.gradient(this.u);
-				
 				Matrix newu = this.u.minus(SandiaMatrixUtils.timesInplace(gradU,etat(iter)));
-				
 				newu = regul.prox(newu, lambda);
 				
 				// Dprime is tasks x nusers
 				Matrix Dprime = newu.transpose().times(X.transpose());
-				
 				loss.setX(Dprime);
 				Matrix gradW = loss.gradient(this.w);
-				
 				Matrix neww = this.w.minus(SandiaMatrixUtils.timesInplace(gradW,etat(iter)));
-				
 				neww = regul.prox(neww, lambda);
+				
+				if(this.biasMode){
+					// Calculate gradient of bias (don't regularise)
+					this.u.transpose().times(X).times(this.w).plus(this.bias);
+				}
 				
 				double sumchangew = SandiaMatrixUtils.absSum(neww.minus(this.w));
 				double totalw = SandiaMatrixUtils.absSum(this.w);

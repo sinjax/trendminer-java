@@ -11,7 +11,9 @@ public class SquareLossFunction extends LossFunction{
 
 	@Override
 	public double eval(Matrix W) {
+		
 		Matrix v = (X.times(W).minus(Y));
+		if(this.bias!=null) v.plus(this.bias);
 		v.dotTimesEquals(v);
 		return v.sumOfRows().sum();
 	}

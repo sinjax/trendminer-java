@@ -14,6 +14,7 @@ import gov.sandia.cognition.math.matrix.Matrix;
 public abstract class LossFunction {
 	protected Matrix X;
 	protected Matrix Y;
+	protected Matrix bias;
 	public void setX(Matrix X){
 		this.X = X;
 	}
@@ -22,4 +23,7 @@ public abstract class LossFunction {
 	}
 	public abstract Matrix gradient(Matrix W);
 	public abstract double eval(Matrix W);
+	public void setBias(Matrix bias) {
+		this.bias = bias;
+	}
 }

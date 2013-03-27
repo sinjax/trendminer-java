@@ -31,6 +31,7 @@ public class MatLossFunction extends LossFunction{
 		int allRowsW = W.getNumRows()-1;
 		for (int i = 0; i < Y.getNumColumns(); i++) {
 			this.f.setY(Y.getSubMatrix(0, allRowsY, i, i));
+			this.f.setBias(bias.getSubMatrix(0, allRowsY, i, i));
 			Matrix submatrix = f.gradient(W.getSubMatrix(0, allRowsW, i, i));
 			ret.setSubMatrix(0, i, submatrix);
 		}
