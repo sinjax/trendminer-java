@@ -168,20 +168,11 @@ public class BilinearSparseOnlineLearner {
 	public void process(Matrix X, Matrix Y){
 		int nfeatures = X.getNumRows();
 		int nusers = X.getNumColumns();
-		if(this.bias){
-			nfeatures+=1;
-			nusers+=1;
-			SparseMatrix newX = SparseMatrixFactoryMTJ.INSTANCE.createMatrix(nfeatures, nusers);
-			for (int i = 0; i < nfeatures; i++) {
-				newX.setElement(i, 0, 1);
-			}
-			for (int i = 0; i < nusers; i++) {
-				newX.setElement(0, i, 1);
-			}
-			newX.setSubMatrix(1, 1, X);
-			X = newX;
+		if(bias) {
+			// Add the bias term to u and w
+			nusers++;
+			nfeatures++;
 		}
-		
 		int ntasks = Y.getNumColumns();
 //		int ninstances = Y.getNumRows(); // Assume 1 instance!
 		if (this.w == null){
@@ -199,24 +190,35 @@ public class BilinearSparseOnlineLearner {
 				
 				
 				// Vprime is nwords x tasks
-				Matrix Vprime = X.transpose().times(this.w);
-				
-				loss.setX(Vprime.transpose());
+				Matrix Vprime = null;
+				if(bias)
+				{
+					Vprime = X.transpose().times(this.w.getSubMatrix(0, nfeatures-2, 0, ntasks-1));
+					Vprime = SandiaMatrixUtils.vstackValue(Vprime,SparseMatrixFactoryMTJ.INSTANCE,1).transpose(); 
+				}
+				else{
+					Vprime = X.transpose().times(this.w);
+					Vprime = Vprime.transpose();
+				}
+				loss.setX(Vprime);
 				Matrix gradU = loss.gradient(this.u);
-				
 				Matrix newu = this.u.minus(SandiaMatrixUtils.timesInplace(gradU,etat(iter)));
-				
-				newu = regul.prox(newu, lambda);
+				newu = regul.prox(newu, lambda,bias);
 				
 				// Dprime is tasks x nusers
-				Matrix Dprime = newu.transpose().times(X.transpose());
-				
+				Matrix Dprime = null;
+				if(bias)
+				{
+					Dprime = newu.getSubMatrix(0, nusers-2, 0, ntasks-1).transpose().times(X.transpose());
+					Dprime = SandiaMatrixUtils.hstackValue(Dprime,SparseMatrixFactoryMTJ.INSTANCE,1); 
+				}
+				else{
+					Dprime = newu.transpose().times(X.transpose());
+				}
 				loss.setX(Dprime);
 				Matrix gradW = loss.gradient(this.w);
-				
 				Matrix neww = this.w.minus(SandiaMatrixUtils.timesInplace(gradW,etat(iter)));
-				
-				neww = regul.prox(neww, lambda);
+				neww = regul.prox(neww, lambda,bias);
 				
 				double sumchangew = SandiaMatrixUtils.absSum(neww.minus(this.w));
 				double totalw = SandiaMatrixUtils.absSum(this.w);
@@ -269,6 +271,23 @@ public class BilinearSparseOnlineLearner {
 		boolean indw = params.getTyped("indw");
 		boolean indu = params.getTyped("indu");
 		double total = 0;
+		boolean bias = params.getTyped(BilinearLearnerParameters.BIAS);
+		Matrix biasu = null, biasw = null;
+		if(bias){
+			int ntasks = u.getNumColumns();
+			int nusers = u.getNumRows();
+			int nfeatures = w.getNumRows();
+			
+			biasu = u.getSubMatrix(nusers-1, nusers-1, 0, ntasks-1);
+			biasw = w.getSubMatrix(nfeatures-1, nfeatures-1, 0, ntasks-1);
+			biasu = SparseMatrixFactoryMTJ.INSTANCE.createDiagonal(biasu);
+			biasw = SparseMatrixFactoryMTJ.INSTANCE.createDiagonal(biasw);
+			
+			u = u.getSubMatrix(0, nusers-2, 0, ntasks-1);
+			w = w.getSubMatrix(0, nfeatures-2, 0, ntasks-1);
+			
+			
+		}
 		if(indw && indu){
 			int i = 0;
 			for (Pair<Matrix> pair : pairs) {
@@ -276,7 +295,11 @@ public class BilinearSparseOnlineLearner {
 				Matrix Y = pair.secondObject();
 				int ntasks = Y.getNumColumns();
 				SparseMatrix Yexp = expandY(Y);
+				
 				Matrix expectedAll = u.transpose().times(X.transpose()).times(w);
+				if(bias){
+					expectedAll.plus(biasu).plus(biasw);
+				}
 				for (int t = 0; t < ntasks; t++) {
 					double Y_t = Yexp.getElement(t, t);
 					double expected = expectedAll.getElement(t, t);

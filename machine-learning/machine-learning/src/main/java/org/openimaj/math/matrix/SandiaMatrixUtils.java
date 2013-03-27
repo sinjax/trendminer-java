@@ -4,6 +4,7 @@ import com.jmatio.types.MLArray;
 import com.jmatio.types.MLDouble;
 
 import gov.sandia.cognition.math.matrix.Matrix;
+import gov.sandia.cognition.math.matrix.MatrixFactory;
 import gov.sandia.cognition.math.matrix.mtj.DenseMatrix;
 import gov.sandia.cognition.math.matrix.mtj.SparseMatrixFactoryMTJ;
 
@@ -92,4 +93,40 @@ public class SandiaMatrixUtils {
 		return mat;
 	}
 
+	/**
+	 * Add a row to the bottom of this matrix with the value v
+	 * 
+	 * @param transpose
+	 * @param v
+	 * @return
+	 */
+	public static <T extends Matrix> T vstackValue(Matrix mat, MatrixFactory<T> fact, double v) {
+		int ncols = mat.getNumColumns();
+		int nrows = mat.getNumRows();
+		T ret = fact.createMatrix(mat.getNumRows()+1, mat.getNumColumns());
+		ret.setSubMatrix(0, 0, mat);
+		for (int i = 0; i < ncols ; i++) {
+			mat.setElement(nrows-1, i, v);
+		}
+		return ret;
+	}
+
+	/**
+	 * Add a col to the end of this matrix with the value v
+	 * @param mat
+	 * @param fact
+	 * @param v
+	 * @return
+	 */
+	public static <T extends Matrix> Matrix hstackValue(Matrix mat, MatrixFactory<T> fact, double v) {
+		int ncols = mat.getNumColumns();
+		int nrows = mat.getNumRows();
+		T ret = fact.createMatrix(mat.getNumRows(), mat.getNumColumns()+1);
+		ret.setSubMatrix(0, 0, mat);
+		for (int i = 0; i < nrows ; i++) {
+			mat.setElement(i, ncols-1, v);
+		}
+		return ret;
+	}
+	
 }

@@ -5,8 +5,13 @@ import gov.sandia.cognition.math.matrix.Matrix;
 public class L1Regulariser implements Regulariser{
 
 	@Override
-	public Matrix prox(Matrix W, double lambda) {
-		return softThreshold(W,lambda);
+	public Matrix prox(Matrix W, double lambda,boolean bias) {
+		Matrix ret = softThreshold(W,lambda);
+		if(bias){
+			int nrows = W.getNumRows();
+			ret.setRow(nrows-1, W.getRow(nrows-1)); // Reset the bias row
+		}
+		return ret;
 	}
 
 	private Matrix softThreshold(Matrix w, double lambda) {

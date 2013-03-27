@@ -5,7 +5,7 @@ import gov.sandia.cognition.math.matrix.Matrix;
 public class L1L2Regulariser implements Regulariser{
 
 	@Override
-	public Matrix prox(Matrix W, double lambda) {
+	public Matrix prox(Matrix W, double lambda,boolean bias) {
 		int nrows = W.getNumRows();
 		int ncols = W.getNumColumns();
 		Matrix ret = W.clone();
@@ -19,6 +19,9 @@ public class L1L2Regulariser implements Regulariser{
 					ret.setElement(r, c, W.getElement(r, c) * scal);
 				}
 			}
+		}
+		if(bias){
+			ret.setRow(nrows-1, W.getRow(nrows-1)); // Reset the bias row
 		}
 		return ret;
 	}

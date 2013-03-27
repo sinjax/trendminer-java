@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -22,8 +23,7 @@ import org.openimaj.ml.linear.learner.init.ZerosInitStrategy;
 import org.openimaj.util.pair.Pair;
 
 public class BillAustrianExperiments {
-	private static final String BILL_DATA = "/home/ss/Dropbox/TrendMiner/deliverables/year2-"
-			+ "18month/Austrian Data/data.mat";
+	private static final String BILL_DATA = "%s/TrendMiner/deliverables/year2-18month/Austrian Data/data.mat";
 	
 	
 	
@@ -40,17 +40,17 @@ public class BillAustrianExperiments {
 	
 	public static void main(String[] args) throws IOException {
 		pre();
-		BillMatlabFileDataGenerator bmfdg = new BillMatlabFileDataGenerator(new File(BILL_DATA), 98);
+		BillMatlabFileDataGenerator bmfdg = new BillMatlabFileDataGenerator(new File(BILL_DATA()), 98);
 		for (int i = 0; i < bmfdg.nFolds(); i++) {
 			System.out.println("Fold: " + i);
 			BilinearSparseOnlineLearner learner = new BilinearSparseOnlineLearner();
 			
 			BilinearLearnerParameters params = learner.getParams();
 			params.put(BilinearLearnerParameters.ETA0, 0.0002);
-			params.put(BilinearLearnerParameters.LAMBDA, 0.0001);
+			params.put(BilinearLearnerParameters.LAMBDA, 0.0005);
 			params.put(BilinearLearnerParameters.BICONVEX_TOL, 0.01);
 			params.put(BilinearLearnerParameters.BICONVEX_MAXITER, 100);
-			params.put(BilinearLearnerParameters.BIAS, false);
+			params.put(BilinearLearnerParameters.BIAS, true);
 			params.put(BilinearLearnerParameters.WINITSTRAT, new OnesInitStrategy());
 			params.put(BilinearLearnerParameters.UINITSTRAT, new ZerosInitStrategy());
 			learner.reinitParams();
@@ -78,11 +78,25 @@ public class BillAustrianExperiments {
 				double loss = BilinearSparseOnlineLearner.sumLoss(testpairs, u, w, learner.getParams());
 				System.out.println("W sparcity: " + SandiaMatrixUtils.rowSparcity(w));
 				System.out.println("U sparcity: " + SandiaMatrixUtils.rowSparcity(u));
+				if(params.getTyped(BilinearLearnerParameters.BIAS)){
+					System.out.println("W Bias: " + w.getRow(w.getNumRows()-1));
+					System.out.println("U Bias: " + u.getRow(u.getNumRows()-1));
+				}
 				System.out.println(String.format("... loss: %f",loss));
 			}
 			
 			
 		}
 
+	}
+
+	private static String BILL_DATA() {
+		return String.format(BILL_DATA,DROPBOX_HOME());
+	}
+
+	private static String DROPBOX_HOME() {
+		String home = System.getProperty("user.home");
+		
+		return String.format("%s/Dropbox",home);
 	}
 }
