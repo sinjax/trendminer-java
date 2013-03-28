@@ -18,6 +18,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.openimaj.io.FileUtils;
+import org.openimaj.ml.linear.evaluation.BilinearEvaluator;
+import org.openimaj.ml.linear.evaluation.SumLossEvaluator;
 import org.openimaj.ml.linear.learner.BilinearSparseOnlineLearner;
 import org.openimaj.util.pair.Pair;
 
@@ -37,7 +39,7 @@ public class BilinearSparseOnlineLearnerTest {
 		//configure the appender
 		String PATTERN = "%d [%p|%c|%C{1}] %m%n";
 		console.setLayout(new PatternLayout(PATTERN)); 
-		console.setThreshold(Level.DEBUG);
+		console.setThreshold(Level.FATAL);
 		console.activateOptions();
 	  	// add appender to any Logger (here is root)
 		Logger.getRootLogger().addAppender(console);
@@ -71,7 +73,9 @@ public class BilinearSparseOnlineLearnerTest {
 			if(xy == null) continue;
 			pairs.add(xy);
 			learner.process(xy.firstObject(), xy.secondObject());
-			double loss = learner.sumLoss(pairs);
+			BilinearEvaluator eval = new SumLossEvaluator();
+			eval.setLearner(learner);
+			double loss = eval.evaluate(pairs);
 			if(i / 200 == 0) first100 += loss/(i+1);
 			else if(i / 200 == 1) second100 += loss/(i+1);
 			logger.debug(String.format("Pair %d, Loss = %f", i, loss));

@@ -1,11 +1,11 @@
 package org.openimaj.math.matrix;
 
+import gov.sandia.cognition.math.matrix.Matrix;
+import gov.sandia.cognition.math.matrix.Vector;
+import gov.sandia.cognition.math.matrix.mtj.SparseMatrixFactoryMTJ;
+
 import com.jmatio.types.MLArray;
 import com.jmatio.types.MLDouble;
-
-import gov.sandia.cognition.math.matrix.Matrix;
-import gov.sandia.cognition.math.matrix.mtj.DenseMatrix;
-import gov.sandia.cognition.math.matrix.mtj.SparseMatrixFactoryMTJ;
 
 public class SandiaMatrixUtils {
 
@@ -90,6 +90,22 @@ public class SandiaMatrixUtils {
 			}
 		}
 		return mat;
+	}
+
+	public static Vector diag(Matrix mat) {
+		Vector ret;
+		
+		if(mat.getNumColumns() > mat.getNumRows()){
+			ret = mat.getRow(0);
+		}
+		else{
+			ret = mat.getColumn(0);
+		}
+		int rowcol = ret.getDimensionality();
+		for (int rc = 0; rc < rowcol; rc++) {
+			ret.setElement(rc,mat.getElement(rc, rc));
+		}
+		return ret;
 	}
 
 }

@@ -24,6 +24,12 @@ public class MatLossFunction extends LossFunction{
 		super.setY(Y);
 		f.setY(Y);
 	}
+	
+	@Override
+	public void setBias(Matrix bias) {
+		super.setBias(bias);
+		f.setBias(bias);
+	}
 	@Override
 	public Matrix gradient(Matrix W) {
 		SparseMatrix ret = spf.createMatrix(W.getNumRows(), W.getNumColumns());
@@ -31,7 +37,7 @@ public class MatLossFunction extends LossFunction{
 		int allRowsW = W.getNumRows()-1;
 		for (int i = 0; i < Y.getNumColumns(); i++) {
 			this.f.setY(Y.getSubMatrix(0, allRowsY, i, i));
-			this.f.setBias(bias.getSubMatrix(0, allRowsY, i, i));
+			if(bias!=null) this.f.setBias(bias.getSubMatrix(0, allRowsY, i, i));
 			Matrix submatrix = f.gradient(W.getSubMatrix(0, allRowsW, i, i));
 			ret.setSubMatrix(0, i, submatrix);
 		}
@@ -40,10 +46,9 @@ public class MatLossFunction extends LossFunction{
 
 	@Override
 	public double eval(Matrix W) {
-		int total = 0;
-		for (int i = 0; i < Y.getNumColumns(); i++) {
-			total += f.eval(W);
-		}
+		double total = 0;
+		f.setBias(this.bias);
+		total += f.eval(W);
 		return total;
 	}
 
