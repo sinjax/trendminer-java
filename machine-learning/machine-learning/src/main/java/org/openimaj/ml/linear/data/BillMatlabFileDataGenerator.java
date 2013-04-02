@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 
 import org.openimaj.util.filter.Filter;
 import org.openimaj.util.filter.FilterUtils;
+import org.openimaj.util.function.Predicate;
 import org.openimaj.util.pair.Pair;
 
 import com.jmatio.io.MatFileReader;
@@ -83,10 +84,10 @@ public class BillMatlabFileDataGenerator implements DataGenerator<Matrix>{
 
 	private void prepareDayPolls() {
 		ArrayList<String> pollKeys = FilterUtils.filter(this.content.keySet(),
-				new Filter<String>() {
+				new Predicate<String>() {
 
 					@Override
-					public boolean accept(String object) {
+					public boolean test(String object) {
 						return object.endsWith("per_unique_extended");
 					}
 				});

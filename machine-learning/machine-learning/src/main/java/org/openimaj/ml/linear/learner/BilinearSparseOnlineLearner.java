@@ -4,14 +4,18 @@ import gov.sandia.cognition.math.matrix.Matrix;
 import gov.sandia.cognition.math.matrix.mtj.SparseMatrix;
 import gov.sandia.cognition.math.matrix.mtj.SparseMatrixFactoryMTJ;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 
 import org.apache.log4j.Logger;
+import org.openimaj.io.ReadWriteableASCII;
 import org.openimaj.math.matrix.SandiaMatrixUtils;
 import org.openimaj.ml.linear.learner.init.InitStrategy;
 import org.openimaj.ml.linear.learner.init.SparseRandomInitStrategy;
-import org.openimaj.ml.linear.learner.init.ZerosInitStrategy;
+import org.openimaj.ml.linear.learner.init.SparseZerosInitStrategy;
 import org.openimaj.ml.linear.learner.loss.LossFunction;
 import org.openimaj.ml.linear.learner.loss.MatLossFunction;
 import org.openimaj.ml.linear.learner.loss.SquareMissingLossFunction;
@@ -38,6 +42,7 @@ import org.openimaj.util.pair.Pair;
  * 				- Proximal update of W
  * 				- Calculate the gradient of U holding W fixed
  * 				- Proximal update of U
+ * 				- Calculate the gradient of Bias holding U and W fixed
  * 			- flush the batch
  * 		- return current U and W (same as last time is batch isn't filled yet)
  * 
@@ -68,7 +73,7 @@ public class BilinearSparseOnlineLearner {
 		 */
 		public static final String UINITSTRAT = "uinitstrat";
 		/**
-		 * Defaults to a {@link ZerosInitStrategy}
+		 * Defaults to a {@link SparseZerosInitStrategy}
 		 */
 		public static final String BIASINITSTRAT = "biasinitstrat";
 		/**
@@ -139,12 +144,11 @@ public class BilinearSparseOnlineLearner {
 			this.defaults.put(UINITSTRAT, new SparseRandomInitStrategy(0,1,0.5,new Random()));
 			this.defaults.put(BATCHSIZE, 1); // Currently ignored
 			this.defaults.put(BIAS, false);
-			this.defaults.put(BIASINITSTRAT, new ZerosInitStrategy());
+			this.defaults.put(BIASINITSTRAT, new SparseZerosInitStrategy());
 			this.defaults.put(BIASETA0, 0.05);
 			this.defaults.put(ETASTEPS, 3);
 			this.defaults.put(DIMWEIGHTED, false);
 		}
-		
 		
 	}
 	private BilinearLearnerParameters params;
@@ -225,8 +229,9 @@ public class BilinearSparseOnlineLearner {
 				if(this.biasMode) loss.setBias(this.bias);
 				iter += 1;
 				
-				// Vprime is nwords x tasks
+				// Vprime is nusers x tasks
 				Matrix Vprime = X.transpose().times(this.w);
+				// ... so the loss function's X is (tasks x nusers)
 				loss.setX(Vprime.transpose());
 				Matrix gradU = loss.gradient(this.u);
 				if(weightByDim){
@@ -236,10 +241,11 @@ public class BilinearSparseOnlineLearner {
 					SandiaMatrixUtils.timesInplace(gradU,etat(iter,eta0_u));
 				}
 				Matrix newu = this.u.minus(gradU);
-				newu = regul.prox(newu, lambda);
+				newu = regul.prox(newu, lambdat(iter,lambda));
 				
-				// Dprime is tasks x nusers
+				// Dprime is tasks x nwords
 				Matrix Dprime = newu.transpose().times(X.transpose());
+				// ... as is the cost function's X
 				loss.setX(Dprime);
 				Matrix gradW = loss.gradient(this.w);
 				if(weightByDim){
@@ -250,7 +256,7 @@ public class BilinearSparseOnlineLearner {
 				}
 				
 				Matrix neww = this.w.minus(gradW);
-				neww = regul.prox(neww, lambda);
+				neww = regul.prox(neww, lambdat(iter,lambda));
 				
 				
 				
@@ -298,6 +304,9 @@ public class BilinearSparseOnlineLearner {
 				}
 			}
 		}
+	}
+	private double lambdat(int iter, double lambda) {
+		return lambda/iter;
 	}
 	public static SparseMatrix expandY(Matrix Y) {
 		int ntasks = Y.getNumColumns();
