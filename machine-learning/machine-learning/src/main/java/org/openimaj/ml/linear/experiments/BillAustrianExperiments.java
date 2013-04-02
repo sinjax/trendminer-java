@@ -1,6 +1,7 @@
 package org.openimaj.ml.linear.experiments;
 
 import gov.sandia.cognition.math.matrix.Matrix;
+import gov.sandia.cognition.math.matrix.MatrixFactory;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -30,7 +31,8 @@ import org.openimaj.util.pair.Pair;
 
 public class BillAustrianExperiments {
 	private static final String EXPERIMENT_NAME = "%s/streamingExperiments/experiment_%s";
-	private static final String PARAMS_NAME = ".params";
+	private static final String PARAMS_NAME = ".paramsascii";
+	private static final String PARAMS_DATA_NAME = ".params";
 
 	private static final String BILL_DATA_ROOT = "%s/TrendMiner/deliverables/year2-18month/Austrian Data/";
 	private static final String BILL_DATA = "%s/data.mat";
@@ -50,7 +52,8 @@ public class BillAustrianExperiments {
 		File expRoot = new File(experimentRoot);
 		logger.debug("Experiment root: " + expRoot);
 		if(!expRoot.mkdirs()) throw new IOException("Couldn't prepare experiment output");
-		IOUtils.write(params, new DataOutputStream(new FileOutputStream(new File(expRoot,PARAMS_NAME))));
+		IOUtils.write(params, new DataOutputStream(new FileOutputStream(new File(expRoot,PARAMS_DATA_NAME))));
+		IOUtils.writeASCII(new File(expRoot,PARAMS_NAME), params);
 		
 		File logFile = new File(expRoot,"log");
 		if(logFile.exists())logFile.delete();
@@ -73,7 +76,7 @@ public class BillAustrianExperiments {
 		params.put(BilinearLearnerParameters.BIAS, true);
 		params.put(BilinearLearnerParameters.BIASETA0, 0.05);
 		Random initRandom = new Random(1);
-		params.put(BilinearLearnerParameters.WINITSTRAT, new SparseOnesInitStrategy(0.5,initRandom));
+		params.put(BilinearLearnerParameters.WINITSTRAT, new SparseOnesInitStrategy(0.6,initRandom));
 		params.put(BilinearLearnerParameters.UINITSTRAT, new SparseZerosInitStrategy());
 		BillMatlabFileDataGenerator bmfdg = new BillMatlabFileDataGenerator(new File(BILL_DATA()), 98);
 		prepareExperimentLog(params);
@@ -99,7 +102,7 @@ public class BillAustrianExperiments {
 				learner.process(next.firstObject(), next.secondObject());
 				Matrix u = learner.getU();
 				Matrix w = learner.getW();
-				Matrix bias = learner.getBias();
+				Matrix bias = MatrixFactory.getDenseDefault().copyMatrix(learner.getBias());
 				BilinearEvaluator eval = new RootMeanSumLossEvaluator();
 				eval.setLearner(learner);
 				double loss = eval.evaluate(testpairs);

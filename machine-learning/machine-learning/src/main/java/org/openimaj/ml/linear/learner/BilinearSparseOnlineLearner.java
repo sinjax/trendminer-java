@@ -6,12 +6,15 @@ import gov.sandia.cognition.math.matrix.mtj.SparseMatrixFactoryMTJ;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.openimaj.io.ReadWriteableASCII;
+import org.openimaj.io.WriteableASCII;
 import org.openimaj.math.matrix.SandiaMatrixUtils;
 import org.openimaj.ml.linear.learner.init.InitStrategy;
 import org.openimaj.ml.linear.learner.init.SparseRandomInitStrategy;
@@ -54,7 +57,7 @@ public class BilinearSparseOnlineLearner {
 	
 	static Logger logger = Logger.getLogger(BilinearSparseOnlineLearner.class);
 	
-	public static class BilinearLearnerParameters extends LearningParameters{
+	public static class BilinearLearnerParameters extends LearningParameters implements WriteableASCII{
 		
 		/**
 		 * whether a bias component is added to w and u. Default is false.
@@ -148,6 +151,20 @@ public class BilinearSparseOnlineLearner {
 			this.defaults.put(BIASETA0, 0.05);
 			this.defaults.put(ETASTEPS, 3);
 			this.defaults.put(DIMWEIGHTED, false);
+		}
+
+		@Override
+		public void writeASCII(PrintWriter out) throws IOException {
+			Set<String> a = new HashSet<String>(this.keySet());
+			a.addAll(this.defaults.keySet());
+			for (String key : a) {
+				out.printf("%s: %s\n", key, this.getTyped(key));
+			}
+		}
+
+		@Override
+		public String asciiHeader() {
+			return "Bilinear Learner Params";
 		}
 		
 	}
