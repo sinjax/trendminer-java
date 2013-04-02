@@ -18,5 +18,5 @@ fi
 
 EXPCP=`cat $MLHOME/cp.txt`:$MLJAR
 EXPCLASS=org.openimaj.ml.linear.experiments.BillAustrianExperiments
-java -cp $EXPCP $EXPCLASS
+java -Xmx2G -cp $EXPCP $EXPCLASS
 popd >> /dev/null
