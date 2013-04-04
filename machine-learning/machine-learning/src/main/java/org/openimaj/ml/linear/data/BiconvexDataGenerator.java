@@ -3,6 +3,7 @@ package org.openimaj.ml.linear.data;
 import java.util.Random;
 
 import gov.sandia.cognition.math.matrix.Matrix;
+import gov.sandia.cognition.math.matrix.MatrixEntry;
 import gov.sandia.cognition.math.matrix.Vector;
 import gov.sandia.cognition.math.matrix.mtj.SparseMatrix;
 import gov.sandia.cognition.math.matrix.mtj.SparseMatrixFactoryMTJ;
@@ -41,12 +42,13 @@ public class BiconvexDataGenerator implements DataGenerator<Matrix>{
 	private Matrix u;
 	private SparseMatrix w;
 	private double noise;
+	private double xsparcity;
 
 	/**
 	 * Generates a biconvex data generator.
 	 */
 	public BiconvexDataGenerator() {
-		this(5,10,1,0.3,true,false,-1,0.0001);
+		this(5,10,1,0.3,0,true,false,-1,0.0001);
 	}
 	
 	
@@ -63,7 +65,7 @@ public class BiconvexDataGenerator implements DataGenerator<Matrix>{
 	 */
 	public BiconvexDataGenerator(
 			int nusers, int nfeatures,int ntasks, 
-			double sparcity, 
+			double sparcity, double xsparcity,
 			boolean indw, boolean indu,
 			int seed,double noise
 			
@@ -75,6 +77,7 @@ public class BiconvexDataGenerator implements DataGenerator<Matrix>{
 		this.indw = indw;
 		this.indu = indu;
 		this.noise = Math.abs(noise);
+		this.xsparcity = xsparcity;
 		this.smf = new SparseMatrixFactoryMTJ();
 		
 		if(this.seed>=0)
@@ -117,6 +120,13 @@ public class BiconvexDataGenerator implements DataGenerator<Matrix>{
 	@Override
 	public Pair<Matrix> generate() {
 		Matrix x = smf.createUniformRandom(nfeatures, nusers, 0, 1, rng);
+		Matrix xSparse = smf.createMatrix(nfeatures, nusers);
+		for (MatrixEntry matrixEntry : x) {
+			if(this.rng.nextDouble() >= this.xsparcity){				
+				xSparse.setElement(matrixEntry.getRowIndex(),matrixEntry.getColumnIndex(),matrixEntry.getValue());
+			}
+		}
+		x = xSparse;
 		Matrix y = null;
 		if (indw && indu){
 			y = smf.createMatrix(1, ntasks);

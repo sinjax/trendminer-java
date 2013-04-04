@@ -7,8 +7,8 @@ import gov.sandia.cognition.math.matrix.mtj.SparseMatrix;
 
 import org.apache.log4j.Logger;
 import org.openimaj.math.matrix.SandiaMatrixUtils;
+import org.openimaj.ml.linear.learner.BilinearLearnerParameters;
 import org.openimaj.ml.linear.learner.BilinearSparseOnlineLearner;
-import org.openimaj.ml.linear.learner.BilinearSparseOnlineLearner.BilinearLearnerParameters;
 import org.openimaj.ml.linear.learner.loss.LossFunction;
 import org.openimaj.ml.linear.learner.loss.MatLossFunction;
 import org.openimaj.util.pair.Pair;

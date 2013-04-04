@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.openimaj.util.filter.Filter;
 import org.openimaj.util.filter.FilterUtils;
 import org.openimaj.util.function.Predicate;
 import org.openimaj.util.pair.Pair;

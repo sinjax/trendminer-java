@@ -1,6 +1,7 @@
 package org.openimaj.math.matrix;
 
 import gov.sandia.cognition.math.matrix.Matrix;
+import gov.sandia.cognition.math.matrix.MatrixFactory;
 import gov.sandia.cognition.math.matrix.Vector;
 import gov.sandia.cognition.math.matrix.mtj.SparseMatrixFactoryMTJ;
 
@@ -106,6 +107,26 @@ public class SandiaMatrixUtils {
 			ret.setElement(rc,mat.getElement(rc, rc));
 		}
 		return ret;
+	}
+
+	public static Matrix vstack(MatrixFactory<? extends Matrix> matrixFactory, Matrix ... matricies) {
+		int nrows = 0;
+		int ncols = 0;
+		for (Matrix matrix : matricies) {
+			nrows+=matrix.getNumRows();
+			ncols = matrix.getNumColumns();
+		}
+		Matrix ret = matrixFactory.createMatrix(nrows, ncols);
+		int currentRow = 0;
+		for (Matrix matrix : matricies) {
+			ret.setSubMatrix(currentRow, 0, matrix);
+			currentRow += matrix.getNumRows();
+		}
+		return ret;
+	}
+
+	public static Matrix vstack(Matrix ... matricies) {
+		return vstack(MatrixFactory.getDefault(), matricies);
 	}
 
 }
