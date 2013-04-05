@@ -25,8 +25,8 @@ public class SumLossEvaluator extends BilinearEvaluator{
 	}
 	
 	public double sumLoss(List<Pair<Matrix>> pairs, Matrix u, Matrix w, Matrix bias, BilinearLearnerParameters params) {
-		boolean indw = params.getTyped("indw");
-		boolean indu = params.getTyped("indu");
+		Boolean indw = params.getTyped("indw");
+		Boolean indu = params.getTyped("indu");
 		LossFunction loss = params.getTyped(BilinearLearnerParameters.LOSS);
 		if(indw && indu){
 			loss = new MatLossFunction(loss);

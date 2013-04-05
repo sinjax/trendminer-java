@@ -184,8 +184,8 @@ public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>
 				this.w = neww;
 				this.u = newu;
 				
-				double biconvextol = this.params.getTyped("biconvex_tol");
-				int maxiter = this.params.getTyped("biconvex_maxiter");
+				Double biconvextol = this.params.getTyped("biconvex_tol");
+				Integer maxiter = this.params.getTyped("biconvex_maxiter");
 				if(iter%3 == 0){
 					logger.debug(String.format("Iter: %d. Last Ratio: %2.3f",iter,ratio));
 				}
@@ -215,23 +215,23 @@ public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>
 		return Yexp;
 	}
 	private double biasEtat(int iter){
-		double biasEta0 = this.params.getTyped(BilinearLearnerParameters.BIASETA0);
+		Double biasEta0 = this.params.getTyped(BilinearLearnerParameters.BIASETA0);
 		return biasEta0 / Math.sqrt(iter);
 	}
 	
 	private double dimWeightedetat(int iter, int ndims,double eta0) {
-		int etaSteps = this.params.getTyped(BilinearLearnerParameters.ETASTEPS);
+		Integer etaSteps = this.params.getTyped(BilinearLearnerParameters.ETASTEPS);
 		double sqrtCeil = Math.sqrt(Math.ceil(iter/(double)etaSteps));
 		return (eta(eta0) / sqrtCeil) / ndims;
 	}
 	
 	private double etat(int iter,double eta0) {
-		int etaSteps = this.params.getTyped(BilinearLearnerParameters.ETASTEPS);
+		Integer etaSteps = this.params.getTyped(BilinearLearnerParameters.ETASTEPS);
 		double sqrtCeil = Math.sqrt(Math.ceil(iter/(double)etaSteps));
 		return eta(eta0) / sqrtCeil;
 	}
 	private double eta(double eta0) {
-		int batchsize = this.params.getTyped(BilinearLearnerParameters.BATCHSIZE);
+		Integer batchsize = this.params.getTyped(BilinearLearnerParameters.BATCHSIZE);
 		return eta0 / batchsize;
 	}
 	

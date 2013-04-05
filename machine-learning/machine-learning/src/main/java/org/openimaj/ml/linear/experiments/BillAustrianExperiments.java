@@ -108,7 +108,8 @@ public class BillAustrianExperiments {
 				double loss = eval.evaluate(testpairs);
 				logger.debug("W row sparcity: " + SandiaMatrixUtils.rowSparcity(w));
 				logger.debug("U row sparcity: " + SandiaMatrixUtils.rowSparcity(u));
-				if(learner.getParams().getTyped(BilinearLearnerParameters.BIAS)){
+				Boolean biasMode = learner.getParams().getTyped(BilinearLearnerParameters.BIAS);
+				if(biasMode){
 					logger.debug("Bias: " + SandiaMatrixUtils.diag(bias));
 				}
 				logger.debug(String.format("... loss: %f",loss));
