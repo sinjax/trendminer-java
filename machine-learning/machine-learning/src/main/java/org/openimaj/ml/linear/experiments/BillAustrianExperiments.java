@@ -69,7 +69,6 @@ public class BillAustrianExperiments {
 		BilinearLearnerParameters params = new BilinearLearnerParameters();
 		params.put(BilinearLearnerParameters.ETA0_U, 0.0002);
 		params.put(BilinearLearnerParameters.ETA0_W, 0.0002);
-		params.put(BilinearLearnerParameters.DIMWEIGHTED, false);
 		params.put(BilinearLearnerParameters.LAMBDA, 0.001);
 		params.put(BilinearLearnerParameters.BICONVEX_TOL, 0.01);
 		params.put(BilinearLearnerParameters.BICONVEX_MAXITER, 10);

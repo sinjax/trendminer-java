@@ -85,7 +85,6 @@ public class BilinearLearnerParameters extends LearningParameters implements Wri
 	 */
 	private static final long serialVersionUID = -2059819246888686435L;
 	public static final String ETASTEPS = "etasteps";
-	public static final String DIMWEIGHTED = "dimweighted";
 	
 	public BilinearLearnerParameters() {
 		this.defaults.put(REGUL, new L1L2Regulariser());
@@ -105,7 +104,6 @@ public class BilinearLearnerParameters extends LearningParameters implements Wri
 		this.defaults.put(BIASINITSTRAT, new SparseZerosInitStrategy());
 		this.defaults.put(BIASETA0, 0.05);
 		this.defaults.put(ETASTEPS, 3);
-		this.defaults.put(DIMWEIGHTED, false);
 	}
 
 	@Override

@@ -42,21 +42,20 @@ public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>
 	
 	static Logger logger = Logger.getLogger(BilinearSparseOnlineLearner.class);
 	
-	private BilinearLearnerParameters params;
-	private Matrix w;
-	private Matrix u;
-	private Boolean indu;
-	private Boolean indw;
-	private SparseMatrixFactoryMTJ smf = SparseMatrixFactoryMTJ.INSTANCE;
-	private LossFunction loss;
-	private Regulariser regul;
-	private Double lambda;
-	private Boolean biasMode;
-	private Matrix bias;
-	private Matrix diagX;
-	private Boolean weightByDim;
-	private Double eta0_u;
-	private Double eta0_w;
+	protected BilinearLearnerParameters params;
+	protected Matrix w;
+	protected Matrix u;
+	protected Boolean indu;
+	protected Boolean indw;
+	protected SparseMatrixFactoryMTJ smf = SparseMatrixFactoryMTJ.INSTANCE;
+	protected LossFunction loss;
+	protected Regulariser regul;
+	protected Double lambda;
+	protected Boolean biasMode;
+	protected Matrix bias;
+	protected Matrix diagX;
+	protected Double eta0_u;
+	protected Double eta0_w;
 	
 	public BilinearSparseOnlineLearner() {
 		this(new BilinearLearnerParameters());
@@ -73,7 +72,6 @@ public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>
 		this.regul = this.params.getTyped(BilinearLearnerParameters.REGUL);
 		this.lambda = this.params.getTyped(BilinearLearnerParameters.LAMBDA);
 		this.biasMode = this.params.getTyped(BilinearLearnerParameters.BIAS);
-		this.weightByDim = this.params.getTyped(BilinearLearnerParameters.DIMWEIGHTED);
 		this.eta0_u = this.params.getTyped(BilinearLearnerParameters.ETA0_U);
 		this.eta0_w = this.params.getTyped(BilinearLearnerParameters.ETA0_W);
 		
@@ -120,34 +118,20 @@ public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>
 				if(this.biasMode) loss.setBias(this.bias);
 				iter += 1;
 				
+				double uLossWeight = etat(iter,eta0_u);
+				double wLossWeighted = etat(iter,eta0_w);
+				double weightedLambda = lambdat(iter,lambda);
 				// Vprime is nusers x tasks
 				Matrix Vprime = X.transpose().times(this.w);
 				// ... so the loss function's X is (tasks x nusers)
 				loss.setX(Vprime.transpose());
-				Matrix gradU = loss.gradient(this.u);
-				if(weightByDim){
-					SandiaMatrixUtils.timesInplace(gradU,dimWeightedetat(iter,nfeatures,eta0_u));
-				}
-				else{					
-					SandiaMatrixUtils.timesInplace(gradU,etat(iter,eta0_u));
-				}
-				Matrix newu = this.u.minus(gradU);
-				newu = regul.prox(newu, lambdat(iter,lambda));
+				Matrix newu = updateU(this.u,uLossWeight, weightedLambda);
 				
 				// Dprime is tasks x nwords
 				Matrix Dprime = newu.transpose().times(X.transpose());
 				// ... as is the cost function's X
 				loss.setX(Dprime);
-				Matrix gradW = loss.gradient(this.w);
-				if(weightByDim){
-					SandiaMatrixUtils.timesInplace(gradW,dimWeightedetat(iter,nfeatures,eta0_w));
-				}
-				else{					
-					SandiaMatrixUtils.timesInplace(gradW,etat(iter,eta0_w));
-				}
-				
-				Matrix neww = this.w.minus(gradW);
-				neww = regul.prox(neww, lambdat(iter,lambda));
+				Matrix neww = updateW(this.w,wLossWeighted, weightedLambda);
 				
 				
 				
@@ -165,12 +149,8 @@ public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>
 					loss.setX(diagX);
 					// Calculate gradient of bias (don't regularise)
 					Matrix biasGrad = loss.gradient(mult);
-					Matrix newbias = this.bias.minus(
-							SandiaMatrixUtils.timesInplace(
-									biasGrad,
-									biasEtat(iter)
-							)
-					);
+					double biasLossWeight = biasEtat(iter);
+					Matrix newbias = updateBias(biasGrad, biasLossWeight);
 					
 					double sumchangebias = SandiaMatrixUtils.absSum(newbias.minus(this.bias));
 					double totalbias = SandiaMatrixUtils.absSum(this.bias);
@@ -195,6 +175,30 @@ public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>
 				}
 			}
 		}
+	}
+	protected Matrix updateBias(Matrix biasGrad, double biasLossWeight) {
+		Matrix newbias = this.bias.minus(
+				SandiaMatrixUtils.timesInplace(
+						biasGrad,
+						biasLossWeight
+				)
+		);
+		return newbias;
+	}
+	protected Matrix updateW(Matrix currentW, double wLossWeighted, double weightedLambda) {
+		Matrix gradW = loss.gradient(currentW);		
+		SandiaMatrixUtils.timesInplace(gradW,wLossWeighted);
+		
+		Matrix neww = currentW.minus(gradW);
+		neww = regul.prox(neww, weightedLambda);
+		return neww;
+	}
+	protected Matrix updateU(Matrix currentU, double uLossWeight, double uWeightedLambda) {
+		Matrix gradU = loss.gradient(currentU);
+		SandiaMatrixUtils.timesInplace(gradU,uLossWeight);
+		Matrix newu = currentU.minus(gradU);
+		newu = regul.prox(newu, uWeightedLambda);
+		return newu;
 	}
 	private double lambdat(int iter, double lambda) {
 		return lambda/iter;
@@ -266,5 +270,19 @@ public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>
 		InitStrategy wstrat = this.params.getTyped(BilinearLearnerParameters.WINITSTRAT);
 		Matrix newW = wstrat.init(newWords, this.w.getNumColumns());
 		this.w = SandiaMatrixUtils.vstack(this.w,newW);
+	}
+	
+	public BilinearSparseOnlineLearner clone(){
+		BilinearSparseOnlineLearner ret = new BilinearSparseOnlineLearner(this.getParams());
+		ret.u = this.u.clone();
+		ret.w = this.w.clone();
+		return ret;
+	}
+	public void setU(Matrix newu) {
+		this.u = newu;
+	}
+	
+	public void setW(Matrix neww) {
+		this.w = neww;
 	}
 }

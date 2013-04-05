@@ -23,6 +23,7 @@ public class IncrementalBilinearSparseOnlineLearner implements OnlineLearner<Map
 	private HashMap<String, Integer> users;
 	private HashMap<String, Integer> values;
 	private BilinearSparseOnlineLearner bilinearLearner;
+	private BilinearLearnerParameters params;
 
 	public IncrementalBilinearSparseOnlineLearner() {
 		init(new IncrementalBilinearSparseOnlineLearnerParams());
@@ -31,12 +32,22 @@ public class IncrementalBilinearSparseOnlineLearner implements OnlineLearner<Map
 	public IncrementalBilinearSparseOnlineLearner(BilinearLearnerParameters params){
 		init(params);
 	}
+	
+	public void reinitParams() {
+		init(this.params);
+		
+	}
 
 	private void init(BilinearLearnerParameters params) {
 		vocabulary = new HashMap<String,Integer>();
 		users = new HashMap<String, Integer>();
 		values = new HashMap<String, Integer>();
+		this.params = params;
 		bilinearLearner = new BilinearSparseOnlineLearner(params);
+	}
+	
+	public BilinearLearnerParameters getParams(){
+		return this.params;
 	}
 	
 	@Override
@@ -103,8 +114,20 @@ public class IncrementalBilinearSparseOnlineLearner implements OnlineLearner<Map
 		return newWords;
 	}
 
-	public BilinearSparseOnlineLearner getBilinearLearner() {
-		return this.bilinearLearner;
+	public BilinearSparseOnlineLearner getBilinearLearner(int nusers, int nwords) {
+		BilinearSparseOnlineLearner ret = this.bilinearLearner.clone();
+		
+		Matrix u = ret.getU();
+		Matrix w = ret.getW();
+		Matrix newu = SparseMatrixFactoryMTJ.INSTANCE.createMatrix(nusers, u.getNumColumns());
+		Matrix neww = SparseMatrixFactoryMTJ.INSTANCE.createMatrix(nwords, w.getNumColumns());
+		
+		newu.setSubMatrix(0, 0, u);
+		neww.setSubMatrix(0, 0, w);
+		
+		ret.setU(newu);
+		ret.setW(neww);
+		return ret;
 	}
 
 	public Pair<Matrix> asMatrixPair(
