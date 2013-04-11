@@ -24,6 +24,7 @@ import org.openimaj.ml.linear.evaluation.BilinearEvaluator;
 import org.openimaj.ml.linear.evaluation.RootMeanSumLossEvaluator;
 import org.openimaj.ml.linear.learner.BilinearLearnerParameters;
 import org.openimaj.ml.linear.learner.BilinearSparseOnlineLearner;
+import org.openimaj.ml.linear.learner.init.OnesInitStrategy;
 import org.openimaj.ml.linear.learner.init.SparseOnesInitStrategy;
 import org.openimaj.ml.linear.learner.init.SparseRowOnesInitStrategy;
 import org.openimaj.ml.linear.learner.init.SparseZerosInitStrategy;
@@ -38,8 +39,9 @@ public class BillAustrianExperiments {
 	private static final String BILL_DATA = "%s/data.mat";
 	
 	static Logger logger = Logger.getLogger(BillAustrianExperiments.class);
+	private static long experimentTime = -1;
 	
-	private static void prepareExperimentLog(BilinearLearnerParameters params) throws IOException {
+	protected static void prepareExperimentLog(BilinearLearnerParameters params) throws IOException {
 		ConsoleAppender console = new ConsoleAppender(); //create appender
 		//configure the appender
 		String PATTERN = "[%p->%C{1}] %m%n";
@@ -48,10 +50,8 @@ public class BillAustrianExperiments {
 		console.activateOptions();
 	  	// add appender to any Logger (here is root)
 		Logger.getRootLogger().addAppender(console);
-		String experimentRoot = String.format(EXPERIMENT_NAME,BILL_DATA_ROOT(),""+System.currentTimeMillis());
-		File expRoot = new File(experimentRoot);
-		logger.debug("Experiment root: " + expRoot);
-		if(!expRoot.mkdirs()) throw new IOException("Couldn't prepare experiment output");
+		File expRoot = prepareExperimentRoot();
+		
 		IOUtils.write(params, new DataOutputStream(new FileOutputStream(new File(expRoot,PARAMS_DATA_NAME))));
 		IOUtils.writeASCII(new File(expRoot,PARAMS_NAME), params);
 		
@@ -64,6 +64,22 @@ public class BillAustrianExperiments {
 		
 	}
 	
+	public static File prepareExperimentRoot() throws IOException {
+		String experimentRoot = String.format(EXPERIMENT_NAME,BILL_DATA_ROOT(),""+currentExperimentTime());
+		File expRoot = new File(experimentRoot);
+		if(expRoot.exists() && expRoot.isDirectory()) return expRoot;
+		logger.debug("Experiment root: " + expRoot);
+		if(!expRoot.mkdirs()) throw new IOException("Couldn't prepare experiment output");
+		return expRoot;
+	}
+
+	private static long currentExperimentTime() {
+		if(experimentTime==-1){
+			experimentTime = System.currentTimeMillis();
+		}
+		return experimentTime;
+	}
+
 	public static void main(String[] args) throws IOException {
 		
 		BilinearLearnerParameters params = new BilinearLearnerParameters();
@@ -75,9 +91,9 @@ public class BillAustrianExperiments {
 		params.put(BilinearLearnerParameters.BIAS, true);
 		params.put(BilinearLearnerParameters.BIASETA0, 0.05);
 		Random initRandom = new Random(1);
-		params.put(BilinearLearnerParameters.WINITSTRAT, new SparseOnesInitStrategy(0.6,initRandom));
+		params.put(BilinearLearnerParameters.WINITSTRAT, new OnesInitStrategy());
 		params.put(BilinearLearnerParameters.UINITSTRAT, new SparseZerosInitStrategy());
-		BillMatlabFileDataGenerator bmfdg = new BillMatlabFileDataGenerator(new File(BILL_DATA()), 98);
+		BillMatlabFileDataGenerator bmfdg = new BillMatlabFileDataGenerator(new File(BILL_DATA()), 98,true);
 		prepareExperimentLog(params);
 		for (int i = 0; i < bmfdg.nFolds(); i++) {
 			logger.debug("Fold: " + i);
@@ -116,7 +132,7 @@ public class BillAustrianExperiments {
 		}		
 	}
 	
-	private static String BILL_DATA() {
+	protected static String BILL_DATA() {
 		
 		return String.format(BILL_DATA,BILL_DATA_ROOT());
 	}

@@ -1,14 +1,21 @@
 package org.openimaj.ml.linear.data;
 
 import gov.sandia.cognition.math.matrix.Matrix;
+import gov.sandia.cognition.math.matrix.Vector;
+import gov.sandia.cognition.math.matrix.mtj.DenseMatrixFactoryMTJ;
+import gov.sandia.cognition.math.matrix.mtj.DenseVectorFactoryMTJ;
 import gov.sandia.cognition.math.matrix.mtj.SparseMatrixFactoryMTJ;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.openimaj.util.filter.FilterUtils;
 import org.openimaj.util.function.Predicate;
@@ -17,6 +24,7 @@ import org.openimaj.util.pair.Pair;
 import com.jmatio.io.MatFileReader;
 import com.jmatio.types.MLArray;
 import com.jmatio.types.MLCell;
+import com.jmatio.types.MLChar;
 import com.jmatio.types.MLDouble;
 import com.jmatio.types.MLSparse;
 
@@ -64,8 +72,12 @@ public class BillMatlabFileDataGenerator implements DataGenerator<Matrix>{
 	private int currentIndex;
 	private int ntasks;
 	private int[] indexes;
+	private Map<Integer, String> voc;
+	private String[] tasks;
+	private Set<Integer> filterIndex;
+	private Set<Integer> filterIndexInvert;
 
-	public BillMatlabFileDataGenerator(File matfile, int ndays)
+	public BillMatlabFileDataGenerator(File matfile, int ndays, boolean filter)
 			throws IOException {
 		MatFileReader reader = new MatFileReader(matfile);
 		this.ndays = ndays;
@@ -74,8 +86,73 @@ public class BillMatlabFileDataGenerator implements DataGenerator<Matrix>{
 		prepareFolds();
 		prepareDayUserWords();
 		prepareDayPolls();
+		prepareVocabulary();
+		
+		if(filter){
+			filterWords();
+		}
 	}
 	
+	private void filterWords() {
+		int ndays = this.dayPolls.size();
+		for (int d = 0; d < ndays; d++) {
+			Matrix dayMat = this.dayWords.get(d);
+			for (Integer r: filterIndexInvert) {
+				dayMat.getRow(r).scaleEquals(0);
+			}
+		}
+	}
+
+	public Map<Integer, String> getVocabulary(){
+		return voc;
+	}
+	
+	String[] extraWordsToFilter = new String[] {
+			"der","und","in","ist","nicht","das","ich"
+	};
+	HashSet<String> extraWordsToFilterSet = new HashSet<String>();
+	
+	private void prepareVocabulary() {
+		
+		extraWordsToFilterSet.addAll(Arrays.asList(extraWordsToFilter));
+		
+		MLCell vocLoaded = (MLCell) this.content.get("voc");
+		MLDouble keepIndex = (MLDouble) this.content.get("voc_keep_terms_index");
+		double[] filterIndexArr = keepIndex.getArray()[0];
+		this.filterIndex = new HashSet<Integer>();
+		for (double d : filterIndexArr) {
+			this.filterIndex.add((int) d);
+		}
+		
+		ArrayList<MLArray> vocArr = vocLoaded.cells();
+		int index = 0;
+		this.voc = new HashMap<Integer, String>();
+		for (MLArray vocArrItem : vocArr) {
+			MLChar vocChar = (MLChar)vocArrItem;
+			String vocString = vocChar.getString(0);
+			if(extraWordsToFilterSet.contains(vocString)){
+				this.filterIndex.remove(index);
+			}
+			this.voc.put(index, vocString);
+			index++;
+		}
+		prepareInvertedFilter(vocArr.size());
+	}
+
+	private void prepareInvertedFilter(int vocLength) {
+		this.filterIndexInvert = new HashSet<Integer>();
+		HashSet<Integer> infilter = new HashSet<Integer>();
+		for (Integer i : this.filterIndex) {
+			infilter.add(i);
+		}
+		int j = 0;
+		for (int i = 0; i < vocLength; i++) {
+			if(!infilter.contains(i)){
+				this.filterIndexInvert.add(i);
+			}
+		}
+	}
+
 	public void setFold(int fold, Mode mode){
 		this.indexes = mode.indexes(this.folds.get(fold));
 		this.currentIndex = 0;
@@ -96,9 +173,12 @@ public class BillMatlabFileDataGenerator implements DataGenerator<Matrix>{
 			dayPolls.add(SparseMatrixFactoryMTJ.INSTANCE.createMatrix(1,
 					this.ntasks));
 		}
+		
+		this.tasks = new String[this.ntasks];
 
 		for (int t = 0; t < this.ntasks; t++) {
 			String pollKey = pollKeys.get(t);
+			this.tasks[t] = pollKey;
 			MLDouble arr = (MLDouble) this.content.get(pollKey);
 			for (int i = 0; i < this.ndays; i++) {
 				Matrix dayPoll = dayPolls.get(i);
@@ -106,7 +186,10 @@ public class BillMatlabFileDataGenerator implements DataGenerator<Matrix>{
 			}
 		}
 	}
-
+	
+	public String[] getTasks(){
+		return this.tasks;
+	}
 	private void prepareDayUserWords() {
 		MLSparse arr =  (MLSparse) this.content.get("user_vsr_for_polls");
 		Double[] realVals = arr.exportReal();
