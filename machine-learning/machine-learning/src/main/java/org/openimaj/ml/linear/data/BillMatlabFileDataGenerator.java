@@ -57,6 +57,13 @@ public class BillMatlabFileDataGenerator implements DataGenerator<Matrix>{
 			public int[] indexes(Fold fold) {
 				return fold.validation;
 			}
+		}, ALL{
+
+			@Override
+			public int[] indexes(Fold fold) {
+				return null;
+			}
+			
 		};
 		public abstract int[] indexes(Fold fold) ;
 	}
@@ -74,8 +81,9 @@ public class BillMatlabFileDataGenerator implements DataGenerator<Matrix>{
 	private int[] indexes;
 	private Map<Integer, String> voc;
 	private String[] tasks;
-	private Set<Integer> filterIndex;
-	private Set<Integer> filterIndexInvert;
+	private Set<Integer> keepIndex;
+	private Map<Integer,Integer> indexToVoc = new HashMap<Integer, Integer>();
+	private boolean filter;
 
 	public BillMatlabFileDataGenerator(File matfile, int ndays, boolean filter)
 			throws IOException {
@@ -83,78 +91,57 @@ public class BillMatlabFileDataGenerator implements DataGenerator<Matrix>{
 		this.ndays = ndays;
 		this.content = reader.getContent();
 		this.currentIndex = 0;
+		this.filter = filter;
+		prepareVocabulary();
 		prepareFolds();
 		prepareDayUserWords();
 		prepareDayPolls();
-		prepareVocabulary();
 		
-		if(filter){
-			filterWords();
-		}
 	}
-	
-	private void filterWords() {
-		int ndays = this.dayPolls.size();
-		for (int d = 0; d < ndays; d++) {
-			Matrix dayMat = this.dayWords.get(d);
-			for (Integer r: filterIndexInvert) {
-				dayMat.getRow(r).scaleEquals(0);
-			}
-		}
-	}
-
 	public Map<Integer, String> getVocabulary(){
 		return voc;
 	}
 	
-	String[] extraWordsToFilter = new String[] {
-			"der","und","in","ist","nicht","das","ich"
-	};
-	HashSet<String> extraWordsToFilterSet = new HashSet<String>();
 	
 	private void prepareVocabulary() {
 		
-		extraWordsToFilterSet.addAll(Arrays.asList(extraWordsToFilter));
 		
 		MLCell vocLoaded = (MLCell) this.content.get("voc");
 		MLDouble keepIndex = (MLDouble) this.content.get("voc_keep_terms_index");
 		double[] filterIndexArr = keepIndex.getArray()[0];
-		this.filterIndex = new HashSet<Integer>();
-		for (double d : filterIndexArr) {
-			this.filterIndex.add((int) d);
-		}
+		this.keepIndex = new HashSet<Integer>();
 		
 		ArrayList<MLArray> vocArr = vocLoaded.cells();
+		for (double d : filterIndexArr) {
+			this.keepIndex.add((int) d -1);
+		}
+		
 		int index = 0;
+		int vocIndex = 0;
 		this.voc = new HashMap<Integer, String>();
 		for (MLArray vocArrItem : vocArr) {
 			MLChar vocChar = (MLChar)vocArrItem;
 			String vocString = vocChar.getString(0);
-			if(extraWordsToFilterSet.contains(vocString)){
-				this.filterIndex.remove(index);
+			if(filter && this.keepIndex.contains(index)){
+				this.voc.put(vocIndex, vocString);
+				this.indexToVoc.put(index,vocIndex);
+				vocIndex++;
 			}
-			this.voc.put(index, vocString);
 			index++;
-		}
-		prepareInvertedFilter(vocArr.size());
-	}
-
-	private void prepareInvertedFilter(int vocLength) {
-		this.filterIndexInvert = new HashSet<Integer>();
-		HashSet<Integer> infilter = new HashSet<Integer>();
-		for (Integer i : this.filterIndex) {
-			infilter.add(i);
-		}
-		int j = 0;
-		for (int i = 0; i < vocLength; i++) {
-			if(!infilter.contains(i)){
-				this.filterIndexInvert.add(i);
-			}
 		}
 	}
 
 	public void setFold(int fold, Mode mode){
-		this.indexes = mode.indexes(this.folds.get(fold));
+		if(fold == -1){
+			this.indexes = new int[this.dayWords.size()];
+			for (int i = 0; i < indexes.length; i++) {
+				indexes[i] = i;
+			}
+		}
+		else{			
+			Fold f = this.folds.get(fold);
+			this.indexes = mode.indexes(f);
+		}
 		this.currentIndex = 0;
 	}
 
@@ -195,7 +182,7 @@ public class BillMatlabFileDataGenerator implements DataGenerator<Matrix>{
 		Double[] realVals = arr.exportReal();
 		int[] rows = arr.getIR();
 		int[] cols = arr.getIC();
-		this.nwords = arr.getN();
+		this.nwords = this.voc.size();
 		this.nusers = arr.getM()/this.ndays;
 		dayWords = new ArrayList<Matrix>();
 		for (int i = 0; i < ndays; i++) {
@@ -203,7 +190,8 @@ public class BillMatlabFileDataGenerator implements DataGenerator<Matrix>{
 			dayWords.add(userWord);
 		}
 		for (int i = 0; i < rows.length; i++) {
-			int wordIndex = cols[i];
+			if(filter && !this.keepIndex.contains(cols[i]))continue;
+			int wordIndex = this.indexToVoc.get(cols[i]);
 			int dayIndex = rows[i] / this.nusers;
 			int userIndex = rows[i] - (dayIndex * this.nusers);
 			

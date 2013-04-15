@@ -1,10 +1,18 @@
 package org.openimaj.ml.linear.learner;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.PrintWriter;
+
 import gov.sandia.cognition.math.matrix.Matrix;
+import gov.sandia.cognition.math.matrix.Vector;
+import gov.sandia.cognition.math.matrix.mtj.DenseMatrixFactoryMTJ;
 import gov.sandia.cognition.math.matrix.mtj.SparseMatrix;
 import gov.sandia.cognition.math.matrix.mtj.SparseMatrixFactoryMTJ;
 
 import org.apache.log4j.Logger;
+import org.openimaj.io.ReadWriteableBinary;
 import org.openimaj.math.matrix.SandiaMatrixUtils;
 import org.openimaj.ml.linear.learner.init.InitStrategy;
 import org.openimaj.ml.linear.learner.loss.LossFunction;
@@ -38,7 +46,7 @@ import org.openimaj.ml.linear.learner.regul.Regulariser;
  * @author Sina Samangooei (ss@ecs.soton.ac.uk)
  *
  */
-public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>{
+public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>, ReadWriteableBinary{
 	
 	static Logger logger = Logger.getLogger(BilinearSparseOnlineLearner.class);
 	
@@ -56,6 +64,8 @@ public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>
 	protected Matrix diagX;
 	protected Double eta0_u;
 	protected Double eta0_w;
+
+	private Boolean forceSparcity;
 	
 	public BilinearSparseOnlineLearner() {
 		this(new BilinearLearnerParameters());
@@ -74,6 +84,7 @@ public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>
 		this.biasMode = this.params.getTyped(BilinearLearnerParameters.BIAS);
 		this.eta0_u = this.params.getTyped(BilinearLearnerParameters.ETA0_U);
 		this.eta0_w = this.params.getTyped(BilinearLearnerParameters.ETA0_W);
+		this.forceSparcity = this.params.getTyped(BilinearLearnerParameters.FORCE_SPARCITY);
 		
 		if(indw && indu){
 			this.loss = new MatLossFunction(this.loss);
@@ -160,9 +171,19 @@ public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>
 					
 				}
 				
-				
-				this.w = neww;
-				this.u = newu;
+				/**
+				 * This is not a matter of simply type
+				 * The 0 values of the sparse matrix are also removed. very important.
+				 */
+				if(forceSparcity){
+					this.w = smf.copyMatrix(neww);
+					this.u = smf.copyMatrix(newu);
+				}
+				else{
+					
+					this.w = neww;
+					this.u = newu;
+				}
 				
 				Double biconvextol = this.params.getTyped("biconvex_tol");
 				Integer maxiter = this.params.getTyped("biconvex_maxiter");
@@ -284,5 +305,72 @@ public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>
 	
 	public void setW(Matrix neww) {
 		this.w = neww;
+	}
+	@Override
+	public void readBinary(DataInput in) throws IOException {
+		int nwords = in.readInt();
+		int nusers = in.readInt();
+		int ntasks = in.readInt();
+		
+		
+		this.w = SparseMatrixFactoryMTJ.INSTANCE.createMatrix(nwords, ntasks);
+		for (int t = 0; t < ntasks; t++) {				
+			for (int r = 0; r < nwords; r++) {
+				double readDouble = in.readDouble();
+				if(readDouble != 0){
+					this.w.setElement(r, t, readDouble);					
+				}
+			}
+		}
+		
+		this.u = SparseMatrixFactoryMTJ.INSTANCE.createMatrix(nusers, ntasks);
+		for (int t = 0; t < ntasks; t++) {				
+			for (int r = 0; r < nusers; r++) {
+				double readDouble = in.readDouble();
+				if(readDouble != 0){
+					this.u.setElement(r, t, readDouble);					
+				}
+			}
+		}
+		
+		this.bias = SparseMatrixFactoryMTJ.INSTANCE.createMatrix(ntasks, ntasks);
+		for (int t1 = 0; t1 < ntasks; t1++) {
+			for (int t2 = 0; t2 < ntasks; t2++) {				
+				double readDouble = in.readDouble();
+				if(readDouble != 0){
+					this.bias.setElement(t1, t2, readDouble);					
+				}
+			}
+		}
+	}
+	@Override
+	public byte[] binaryHeader() {
+		return "".getBytes();
+	}
+	@Override
+	public void writeBinary(DataOutput out) throws IOException {
+		out.writeInt(w.getNumRows());
+		out.writeInt(u.getNumRows());
+		out.writeInt(u.getNumColumns());
+		double[] wdata = SandiaMatrixUtils.getData(w);
+		for (int i = 0; i < wdata.length; i++) {
+			out.writeDouble(wdata[i]);
+		}
+		double[] udata = SandiaMatrixUtils.getData(u);
+		for (int i = 0; i < udata.length; i++) {
+			out.writeDouble(udata[i]);
+		}
+		double[] biasdata = SandiaMatrixUtils.getData(bias);
+		for (int i = 0; i < biasdata.length; i++) {
+			out.writeDouble(biasdata[i]);
+		}		
+	}
+	
+	public static void main(String[] args) {
+		Matrix d = DenseMatrixFactoryMTJ.INSTANCE.createMatrix(5, 10);
+		d.setElement(4, 5, 1);
+		System.out.println(d);
+		d = SparseMatrixFactoryMTJ.INSTANCE.copyMatrix(d);
+		System.out.println(d);
 	}
 }

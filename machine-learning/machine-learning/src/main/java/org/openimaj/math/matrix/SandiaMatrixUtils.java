@@ -3,6 +3,7 @@ package org.openimaj.math.matrix;
 import gov.sandia.cognition.math.matrix.Matrix;
 import gov.sandia.cognition.math.matrix.MatrixFactory;
 import gov.sandia.cognition.math.matrix.Vector;
+import gov.sandia.cognition.math.matrix.mtj.DenseMatrixFactoryMTJ;
 import gov.sandia.cognition.math.matrix.mtj.SparseMatrixFactoryMTJ;
 
 import com.jmatio.types.MLArray;
@@ -127,6 +128,10 @@ public class SandiaMatrixUtils {
 
 	public static Matrix vstack(Matrix ... matricies) {
 		return vstack(MatrixFactory.getDefault(), matricies);
+	}
+
+	public static double[] getData(Matrix w) {		
+		return ((no.uib.cipr.matrix.DenseMatrix)DenseMatrixFactoryMTJ.INSTANCE.copyMatrix(w).getInternalMatrix()).getData();
 	}
 
 }

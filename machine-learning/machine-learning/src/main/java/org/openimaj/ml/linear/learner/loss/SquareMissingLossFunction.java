@@ -11,7 +11,8 @@ public class SquareMissingLossFunction extends LossFunction{
 	@Override
 	public Matrix gradient(Matrix W) {
 		Matrix resid = X.times(W).minus(Y);
-		if(this.bias!=null) resid.plus(this.bias);
+		if(this.bias!=null) 
+			resid.plusEquals(this.bias);
 		for (int r = 0; r < Y.getNumRows(); r++) {
 			double yc = Y.getElement(r, 0);
 			if(Double.isNaN(yc)){
@@ -30,7 +31,8 @@ public class SquareMissingLossFunction extends LossFunction{
 		else{
 			v = X.times(W);
 		}
-		if(this.bias!=null) v.plus(this.bias);
+		if(this.bias!=null) 
+			v.plusEquals(this.bias);
 		double sum = 0;
 		for (int r = 0; r < Y.getNumRows(); r++) {
 			for (int c = 0; c < Y.getNumColumns(); c++) {

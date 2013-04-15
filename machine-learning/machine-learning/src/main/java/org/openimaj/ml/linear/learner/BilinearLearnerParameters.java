@@ -1,5 +1,7 @@
 package org.openimaj.ml.linear.learner;
 
+import gov.sandia.cognition.math.matrix.mtj.SparseMatrix;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashSet;
@@ -85,6 +87,11 @@ public class BilinearLearnerParameters extends LearningParameters implements Wri
 	 */
 	private static final long serialVersionUID = -2059819246888686435L;
 	public static final String ETASTEPS = "etasteps";
+	/**
+	 * Should all parameter matricies be held {@link SparseMatrix} instances
+	 * and therefore remain sparse. Forces a copy but could save a lot.
+	 */
+	public static final String FORCE_SPARCITY = "forcesparcity";
 	
 	public BilinearLearnerParameters() {
 		this.defaults.put(REGUL, new L1L2Regulariser());
@@ -104,6 +111,7 @@ public class BilinearLearnerParameters extends LearningParameters implements Wri
 		this.defaults.put(BIASINITSTRAT, new SparseZerosInitStrategy());
 		this.defaults.put(BIASETA0, 0.05);
 		this.defaults.put(ETASTEPS, 3);
+		this.defaults.put(FORCE_SPARCITY, true);
 	}
 
 	@Override
