@@ -92,6 +92,11 @@ public class BilinearLearnerParameters extends LearningParameters implements Wri
 	 * and therefore remain sparse. Forces a copy but could save a lot.
 	 */
 	public static final String FORCE_SPARCITY = "forcesparcity";
+	/**
+	 * The value of w, u and beta are updated each time data is added
+	 * s.t. w = w * (1.0 - DAMPENING). The default value is 0
+	 */
+	public static final String DAMPENING = null;
 	
 	public BilinearLearnerParameters() {
 		this.defaults.put(REGUL, new L1L2Regulariser());
@@ -112,6 +117,7 @@ public class BilinearLearnerParameters extends LearningParameters implements Wri
 		this.defaults.put(BIASETA0, 0.05);
 		this.defaults.put(ETASTEPS, 3);
 		this.defaults.put(FORCE_SPARCITY, true);
+		this.defaults.put(DAMPENING, 0d);
 	}
 
 	@Override

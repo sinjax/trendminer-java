@@ -31,6 +31,7 @@ public class SquareMissingLossFunction extends LossFunction{
 		else{
 			v = X.times(W);
 		}
+		Matrix vWithoutBias = v.clone();
 		if(this.bias!=null) 
 			v.plusEquals(this.bias);
 		double sum = 0;
@@ -39,11 +40,12 @@ public class SquareMissingLossFunction extends LossFunction{
 				double yr = Y.getElement(r, c);
 				if(!Double.isNaN(yr)){
 					double val = v.getElement(r, c);
+					double valNoBias = vWithoutBias.getElement(r, c);
 					double delta = yr - val;
 					logger.debug(
 						String.format(
-							"yr=%d,y=%3.2f,v=%3.2f,delta=%2.5f",
-							r,yr,val,delta
+							"yr=%d,y=%3.2f,v=%3.2f,v(no bias)=%2.5f,delta=%2.5f",
+							r,yr,val,valNoBias,delta
 						)
 					);
 					sum += delta * delta ;

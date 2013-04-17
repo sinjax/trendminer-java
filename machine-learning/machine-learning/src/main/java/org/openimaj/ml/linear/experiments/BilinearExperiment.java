@@ -74,7 +74,7 @@ public abstract class BilinearExperiment {
 		return String.format(BILL_DATA,BILL_DATA_ROOT());
 	}
 	
-	private String BILL_DATA_ROOT() {
+	protected String BILL_DATA_ROOT() {
 		
 		return String.format(BILL_DATA_ROOT,DROPBOX_HOME());
 	}

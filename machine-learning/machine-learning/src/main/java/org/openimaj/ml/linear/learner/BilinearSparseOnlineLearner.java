@@ -118,7 +118,17 @@ public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>
 			initParams(nfeatures, nusers, ntasks); // Number of words, users and tasks	
 		}
 		
+		double dampening = this.params.getTyped(BilinearLearnerParameters.DAMPENING);
+		double weighting = 1.0 - dampening ;
+		
 		if(indw && indu){ // Both u and w have a column per task
+			
+			// Adjust for weighting
+			this.w.scaleEquals(weighting);
+			this.u.scaleEquals(weighting);
+			if(this.biasMode){
+				this.bias.scaleEquals(weighting);
+			}
 			// First expand Y s.t. blocks of rows contain the task values for each row of Y. 
 			// This means Yexp has (n * t x t)
 			SparseMatrix Yexp = expandY(Y);
