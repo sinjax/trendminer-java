@@ -118,7 +118,7 @@ public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>
 			initParams(nfeatures, nusers, ntasks); // Number of words, users and tasks	
 		}
 		
-		double dampening = this.params.getTyped(BilinearLearnerParameters.DAMPENING);
+		Double dampening = this.params.getTyped(BilinearLearnerParameters.DAMPENING);
 		double weighting = 1.0 - dampening ;
 		
 		if(indw && indu){ // Both u and w have a column per task
