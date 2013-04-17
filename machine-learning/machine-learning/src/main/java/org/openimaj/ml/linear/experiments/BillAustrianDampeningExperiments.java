@@ -89,7 +89,7 @@ public class BillAustrianDampeningExperiments extends BilinearExperiment{
 				eval.setLearner(learner);
 				double loss = eval.evaluate(testpairs);
 				logger.debug(String.format("Saving learner, Fold %d, Item %d",foldNumber, j));
-				File learnerOut = new File(FOLD_ROOT(foldNumber),String.format("learner_%d",j));
+				File learnerOut = new File(FOLD_ROOT(foldNumber),String.format("learner_%d_dampening=%2.5f",j,dampening));
 				IOUtils.writeBinary(learnerOut, learner);
 				logger.debug("W row sparcity: " + SandiaMatrixUtils.rowSparcity(w));
 				logger.debug("U row sparcity: " + SandiaMatrixUtils.rowSparcity(u));
