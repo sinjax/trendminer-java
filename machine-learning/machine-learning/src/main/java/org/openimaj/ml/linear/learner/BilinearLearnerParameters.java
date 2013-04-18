@@ -96,7 +96,7 @@ public class BilinearLearnerParameters extends LearningParameters implements Wri
 	 * The value of w, u and beta are updated each time data is added
 	 * s.t. w = w * (1.0 - DAMPENING). The default value is 0
 	 */
-	public static final String DAMPENING = null;
+	public static final String DAMPENING = "dampening";
 	
 	public BilinearLearnerParameters() {
 		this.defaults.put(REGUL, new L1L2Regulariser());

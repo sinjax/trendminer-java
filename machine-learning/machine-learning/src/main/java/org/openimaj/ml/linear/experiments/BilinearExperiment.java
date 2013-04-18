@@ -14,7 +14,7 @@ import org.openimaj.io.IOUtils;
 import org.openimaj.ml.linear.learner.BilinearLearnerParameters;
 
 public abstract class BilinearExperiment {
-	private static final String EXPERIMENT_NAME = "%s/streamingExperiments/experiment_%s";
+	private static final String EXPERIMENT_NAME = "%s/%s/%s_%s";
 	private static final String PARAMS_NAME = ".paramsascii";
 	private static final String PARAMS_DATA_NAME = ".params";
 
@@ -48,7 +48,7 @@ public abstract class BilinearExperiment {
 	}
 	
 	public File prepareExperimentRoot() throws IOException {
-		String experimentRoot = String.format(EXPERIMENT_NAME,BILL_DATA_ROOT(),""+currentExperimentTime());
+		String experimentRoot = String.format(EXPERIMENT_NAME,BILL_DATA_ROOT(),getExperimentSetName(),getExperimentName(),""+currentExperimentTime());
 		File expRoot = new File(experimentRoot);
 		if(expRoot.exists() && expRoot.isDirectory()) return expRoot;
 		logger.debug("Experiment root: " + expRoot);
@@ -86,4 +86,12 @@ public abstract class BilinearExperiment {
 	}
 	
 	public abstract void performExperiment() throws Exception;
+
+	public String getExperimentName() {
+		return "experiment";
+	}
+	
+	public String getExperimentSetName() {
+		return "streamingExperiments";
+	}
 }

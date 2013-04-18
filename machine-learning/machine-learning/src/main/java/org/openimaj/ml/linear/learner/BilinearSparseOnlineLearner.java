@@ -121,7 +121,7 @@ public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>
 		Double dampening = this.params.getTyped(BilinearLearnerParameters.DAMPENING);
 		double weighting = 1.0 - dampening ;
 		
-		logger.debug("... dampeningw, u and bias by: " + weighting);
+		logger.debug("... dampening w, u and bias by: " + weighting);
 		
 		if(indw && indu){ // Both u and w have a column per task
 			

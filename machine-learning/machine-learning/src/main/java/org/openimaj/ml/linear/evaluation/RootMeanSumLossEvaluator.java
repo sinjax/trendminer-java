@@ -46,7 +46,7 @@ public class RootMeanSumLossEvaluator extends BilinearEvaluator{
 				logger.debug("Testing pair: " + i);
 				total += loss.eval(null); // Assums an identity w.
 				i++;
-				ntasks+=4;
+				ntasks+=Y.getNumColumns();
 			}
 			total/=ntasks;
 		}

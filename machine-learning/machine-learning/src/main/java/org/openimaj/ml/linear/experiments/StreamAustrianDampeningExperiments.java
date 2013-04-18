@@ -8,7 +8,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import org.apache.log4j.ConsoleAppender;
@@ -16,6 +18,7 @@ import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+import org.openimaj.io.FileUtils;
 import org.openimaj.io.IOUtils;
 import org.openimaj.math.matrix.SandiaMatrixUtils;
 import org.openimaj.ml.linear.data.BillMatlabFileDataGenerator;
@@ -31,15 +34,17 @@ import org.openimaj.ml.linear.learner.init.SparseRowOnesInitStrategy;
 import org.openimaj.ml.linear.learner.init.SparseZerosInitStrategy;
 import org.openimaj.util.pair.Pair;
 
-public class BillAustrianDampeningExperiments extends BilinearExperiment{
+public class StreamAustrianDampeningExperiments extends BilinearExperiment{
 	
-	public static void main(String[] args) throws Exception {
-		BilinearExperiment exp = new BillAustrianDampeningExperiments();
-		exp.performExperiment();
+	private static final String BATCH_EXPERIMENT = "batchStreamLossExperiments/batch_1366231606223/experiment.log";
+	
+	public String getExperimentName() {
+		return "streamingDampeningExperiments";
 	}
-
 	@Override
-	public void performExperiment() throws IOException {
+	public void performExperiment() throws Exception {
+		
+		Map<Integer,Double> batchLosses = loadBatchLoss();
 		BilinearLearnerParameters params = new BilinearLearnerParameters();
 		params.put(BilinearLearnerParameters.ETA0_U, 0.02);
 		params.put(BilinearLearnerParameters.ETA0_W, 0.02);
@@ -50,64 +55,85 @@ public class BillAustrianDampeningExperiments extends BilinearExperiment{
 		params.put(BilinearLearnerParameters.BIASETA0, 0.5);
 		params.put(BilinearLearnerParameters.WINITSTRAT, new SingleValueInitStrat(0.1));
 		params.put(BilinearLearnerParameters.UINITSTRAT, new SparseZerosInitStrategy());
-//		params.put(BilinearLearnerParameters.DAMPENING, 0.1);
 		BillMatlabFileDataGenerator bmfdg = new BillMatlabFileDataGenerator(
 				new File(BILL_DATA()), 
 				98,
 				true
 		);
 		prepareExperimentLog(params);
-		int foldNumber = 5;
-		logger.debug("Starting dampening experiments");
-		logger.debug("Fold: " + foldNumber);
-		bmfdg.setFold(foldNumber, Mode.TEST);
-		List<Pair<Matrix>> testpairs = new ArrayList<Pair<Matrix>>(); 
-		while(true){
-			Pair<Matrix> next = bmfdg.generate();
-			if(next == null) break;
-			testpairs.add(next);
-		}
 		double dampening = 0d;
 		double dampeningIncr = 0.001d;
 		double dampeningMax = 0.01d;
+		int maxItems = 15;
 		while(dampening < dampeningMax){
 			params.put(BilinearLearnerParameters.DAMPENING, dampening);
-			BilinearSparseOnlineLearner learner = new BilinearSparseOnlineLearner(params);
-			learner.reinitParams();
-			
 			logger.debug("Dampening is now: " + dampening);
-			logger.debug("...training");
-			bmfdg.setFold(foldNumber, Mode.TRAINING);
-			int j = 0;
+			BilinearSparseOnlineLearner learner = new BilinearSparseOnlineLearner(params);
+			dampening+=dampeningIncr;
+			int item = 0;
+			BilinearEvaluator eval = new RootMeanSumLossEvaluator();
+			eval.setLearner(learner);
+			bmfdg.setFold(-1, Mode.ALL); // go through all items in day order
 			while(true){
 				Pair<Matrix> next = bmfdg.generate();
 				if(next == null) break;
-				logger.debug("...trying item "+j++);
+				List<Pair<Matrix>> asList = new ArrayList<Pair<Matrix>>();
+				asList.add(next);
+				if(learner.getW() != null){
+					if(!batchLosses.containsKey(item)){
+						logger.debug(String.format("...No batch result found for: %d, done",item));
+						break;
+					}
+					logger.debug("...Calculating regret for item"+item);				
+					double loss = eval.evaluate(asList);
+					logger.debug(String.format("... loss: %f",loss));
+					double batchloss = batchLosses.get(item);
+					logger.debug(String.format("... batch loss: %f",batchloss));
+					logger.debug(String.format("... regret: %f",(loss-batchloss)));
+				}
+				if(item >= maxItems) break;
 				learner.process(next.firstObject(), next.secondObject());
-				Matrix u = learner.getU();
 				Matrix w = learner.getW();
-				Matrix bias = MatrixFactory.getDenseDefault().copyMatrix(learner.getBias());
-				BilinearEvaluator eval = new RootMeanSumLossEvaluator();
-				eval.setLearner(learner);
-				double loss = eval.evaluate(testpairs);
-				logger.debug(String.format("Saving learner, Fold %d, Item %d",foldNumber, j));
-				File learnerOut = new File(FOLD_ROOT(foldNumber),String.format("learner_%d_dampening=%2.5f",j,dampening));
-				IOUtils.writeBinary(learnerOut, learner);
+				Matrix u = learner.getU();
 				logger.debug("W row sparcity: " + SandiaMatrixUtils.rowSparcity(w));
 				logger.debug(String.format("W range: %2.5f -> %2.5f",SandiaMatrixUtils.min(w), SandiaMatrixUtils.max(w)));
 				logger.debug("U row sparcity: " + SandiaMatrixUtils.rowSparcity(u));
 				logger.debug(String.format("U range: %2.5f -> %2.5f",SandiaMatrixUtils.min(u), SandiaMatrixUtils.max(u)));
-				Boolean biasMode = learner.getParams().getTyped(BilinearLearnerParameters.BIAS);
-				if(biasMode){
-					logger.debug("Bias: " + SandiaMatrixUtils.diag(bias));
-				}
-				logger.debug(String.format("... loss: %f",loss));
+				
+				logger.debug(String.format("... loss (post addition): %f",eval.evaluate(asList)));
+				logger.debug(String.format("Saving learner, Fold %d, Item %d",-1, item));
+				File learnerOut = new File(FOLD_ROOT(-1),String.format("learner_%d",item));
+				IOUtils.writeBinary(learnerOut, learner);
+				
+				item++;
 			}
 			
-			dampening+=dampeningIncr;
 		}
 	}
+
+	private Map<Integer, Double> loadBatchLoss() throws IOException {
+		String[] batchExperimentLines = FileUtils.readlines(new File(
+			BILL_DATA_ROOT(),
+			BATCH_EXPERIMENT
+		));
+		int seenItems = 0;
+		Map<Integer, Double> ret = new HashMap<Integer, Double>();
+		for (String line : batchExperimentLines) {
+			
+			if(line.contains("New Item Seen: ")){
+				seenItems = Integer.parseInt(line.split(":")[1].trim());
+			}
+			
+			if(line.contains("Loss:")){
+				ret.put(seenItems, Double.parseDouble(line.split(":")[1].trim()));
+			}
+		}
+		return ret;
+	}
 	
-} 
+	public static void main(String[] args) throws Exception {
+		BilinearExperiment exp = new StreamAustrianDampeningExperiments();
+		exp.performExperiment();
+	}
 
-
+}
