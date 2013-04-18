@@ -3,19 +3,11 @@ package org.openimaj.ml.linear.experiments;
 import gov.sandia.cognition.math.matrix.Matrix;
 import gov.sandia.cognition.math.matrix.MatrixFactory;
 
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 import org.openimaj.io.IOUtils;
 import org.openimaj.math.matrix.SandiaMatrixUtils;
 import org.openimaj.ml.linear.data.BillMatlabFileDataGenerator;
@@ -24,15 +16,13 @@ import org.openimaj.ml.linear.evaluation.BilinearEvaluator;
 import org.openimaj.ml.linear.evaluation.RootMeanSumLossEvaluator;
 import org.openimaj.ml.linear.learner.BilinearLearnerParameters;
 import org.openimaj.ml.linear.learner.BilinearSparseOnlineLearner;
-import org.openimaj.ml.linear.learner.init.OnesInitStrategy;
 import org.openimaj.ml.linear.learner.init.SingleValueInitStrat;
-import org.openimaj.ml.linear.learner.init.SparseOnesInitStrategy;
-import org.openimaj.ml.linear.learner.init.SparseRowOnesInitStrategy;
 import org.openimaj.ml.linear.learner.init.SparseZerosInitStrategy;
 import org.openimaj.util.pair.Pair;
 
+
 public class BillAustrianDampeningExperiments extends BilinearExperiment{
-	
+		
 	public static void main(String[] args) throws Exception {
 		BilinearExperiment exp = new BillAustrianDampeningExperiments();
 		exp.performExperiment();
@@ -68,8 +58,16 @@ public class BillAustrianDampeningExperiments extends BilinearExperiment{
 			testpairs.add(next);
 		}
 		double dampening = 0d;
-		double dampeningIncr = 0.001d;
-		double dampeningMax = 0.01d;
+		double dampeningIncr = 0.0001d;
+		double dampeningMax = 0.02d;
+		logger.debug(
+			String.format(
+				"Beggining dampening experiments: min=%2.5f,max=%2.5f,incr=%2.5f",
+				dampening,
+				dampeningMax,
+				dampeningIncr
+			
+		));
 		while(dampening < dampeningMax){
 			params.put(BilinearLearnerParameters.DAMPENING, dampening);
 			BilinearSparseOnlineLearner learner = new BilinearSparseOnlineLearner(params);

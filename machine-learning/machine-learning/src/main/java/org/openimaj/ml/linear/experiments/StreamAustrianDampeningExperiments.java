@@ -62,9 +62,17 @@ public class StreamAustrianDampeningExperiments extends BilinearExperiment{
 		);
 		prepareExperimentLog(params);
 		double dampening = 0d;
-		double dampeningIncr = 0.001d;
-		double dampeningMax = 0.01d;
+		double dampeningIncr = 0.00001d;
+		double dampeningMax = 0.001d;
 		int maxItems = 15;
+		logger.debug(
+			String.format(
+				"Beggining dampening experiments: min=%2.5f,max=%2.5f,incr=%2.5f",
+				dampening,
+				dampeningMax,
+				dampeningIncr
+			
+		));
 		while(dampening < dampeningMax){
 			params.put(BilinearLearnerParameters.DAMPENING, dampening);
 			logger.debug("Dampening is now: " + dampening);
