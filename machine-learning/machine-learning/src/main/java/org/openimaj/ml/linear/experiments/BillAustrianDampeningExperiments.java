@@ -67,8 +67,10 @@ public class BillAustrianDampeningExperiments extends BilinearExperiment{
 			if(next == null) break;
 			testpairs.add(next);
 		}
-		double dampening = 0.0d;
-		while(dampening < 1.d){
+		double dampening = 0.001d;
+		double dampeningIncr = 0.001d;
+		double dampeningMax = 0.01d;
+		while(dampening < dampeningMax){
 			params.put(BilinearLearnerParameters.DAMPENING, dampening);
 			BilinearSparseOnlineLearner learner = new BilinearSparseOnlineLearner(params);
 			learner.reinitParams();
@@ -92,7 +94,9 @@ public class BillAustrianDampeningExperiments extends BilinearExperiment{
 				File learnerOut = new File(FOLD_ROOT(foldNumber),String.format("learner_%d_dampening=%2.5f",j,dampening));
 				IOUtils.writeBinary(learnerOut, learner);
 				logger.debug("W row sparcity: " + SandiaMatrixUtils.rowSparcity(w));
+				logger.debug(String.format("W range: %2.5f -> %2.5f",SandiaMatrixUtils.min(w), SandiaMatrixUtils.max(w)));
 				logger.debug("U row sparcity: " + SandiaMatrixUtils.rowSparcity(u));
+				logger.debug(String.format("U range: %2.5f -> %2.5f",SandiaMatrixUtils.min(u), SandiaMatrixUtils.max(u)));
 				Boolean biasMode = learner.getParams().getTyped(BilinearLearnerParameters.BIAS);
 				if(biasMode){
 					logger.debug("Bias: " + SandiaMatrixUtils.diag(bias));
@@ -100,7 +104,7 @@ public class BillAustrianDampeningExperiments extends BilinearExperiment{
 				logger.debug(String.format("... loss: %f",loss));
 			}
 			
-			dampening+=0.05;
+			dampening+=dampeningIncr;
 		}
 	}
 	
