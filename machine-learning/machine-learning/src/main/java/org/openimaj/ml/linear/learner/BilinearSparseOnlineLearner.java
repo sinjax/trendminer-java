@@ -385,4 +385,9 @@ public class BilinearSparseOnlineLearner implements OnlineLearner<Matrix,Matrix>
 		d = SparseMatrixFactoryMTJ.INSTANCE.copyMatrix(d);
 		System.out.println(d);
 	}
+	@Override
+	public Matrix predict(Matrix x) {
+		
+		return null;
+	}
 }
