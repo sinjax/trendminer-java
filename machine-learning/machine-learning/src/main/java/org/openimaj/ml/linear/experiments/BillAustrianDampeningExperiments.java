@@ -37,7 +37,7 @@ public class BillAustrianDampeningExperiments extends BilinearExperiment{
 		params.put(BilinearLearnerParameters.BICONVEX_TOL, 0.01);
 		params.put(BilinearLearnerParameters.BICONVEX_MAXITER, 10);
 		params.put(BilinearLearnerParameters.BIAS, true);
-		params.put(BilinearLearnerParameters.BIASETA0, 0.5);
+		params.put(BilinearLearnerParameters.ETA0_BIAS, 0.5);
 		params.put(BilinearLearnerParameters.WINITSTRAT, new SingleValueInitStrat(0.1));
 		params.put(BilinearLearnerParameters.UINITSTRAT, new SparseZerosInitStrategy());
 //		params.put(BilinearLearnerParameters.DAMPENING, 0.1);

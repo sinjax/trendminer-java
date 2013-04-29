@@ -27,6 +27,7 @@ import org.openimaj.ml.linear.evaluation.BilinearEvaluator;
 import org.openimaj.ml.linear.evaluation.RootMeanSumLossEvaluator;
 import org.openimaj.ml.linear.learner.BilinearLearnerParameters;
 import org.openimaj.ml.linear.learner.BilinearSparseOnlineLearner;
+import org.openimaj.ml.linear.learner.init.HardCodedInitStrat;
 import org.openimaj.ml.linear.learner.init.OnesInitStrategy;
 import org.openimaj.ml.linear.learner.init.SingleValueInitStrat;
 import org.openimaj.ml.linear.learner.init.SparseOnesInitStrategy;
@@ -36,7 +37,9 @@ import org.openimaj.util.pair.Pair;
 
 public class StreamAustrianDampeningExperiments extends BilinearExperiment{
 	
-	private static final String BATCH_EXPERIMENT = "batchStreamLossExperiments/batch_1366231606223/experiment.log";
+//	private static final String BATCH_EXPERIMENT = "batchStreamLossExperiments/batch_1366231606223/experiment.log";
+	private static final String BATCH_EXPERIMENT = "batchStreamLossExperiments/batch_1366820115090/experiment.log";
+	
 	
 	public String getExperimentName() {
 		return "streamingDampeningExperiments";
@@ -46,24 +49,27 @@ public class StreamAustrianDampeningExperiments extends BilinearExperiment{
 		
 		Map<Integer,Double> batchLosses = loadBatchLoss();
 		BilinearLearnerParameters params = new BilinearLearnerParameters();
-		params.put(BilinearLearnerParameters.ETA0_U, 0.02);
-		params.put(BilinearLearnerParameters.ETA0_W, 0.02);
+		params.put(BilinearLearnerParameters.ETA0_U, 0.01);
+		params.put(BilinearLearnerParameters.ETA0_W, 0.01);
 		params.put(BilinearLearnerParameters.LAMBDA, 0.001);
+		params.put(BilinearLearnerParameters.LAMBDA_W, 0.006);
 		params.put(BilinearLearnerParameters.BICONVEX_TOL, 0.01);
 		params.put(BilinearLearnerParameters.BICONVEX_MAXITER, 10);
 		params.put(BilinearLearnerParameters.BIAS, true);
-		params.put(BilinearLearnerParameters.BIASETA0, 0.5);
+		params.put(BilinearLearnerParameters.ETA0_BIAS, 0.5);
 		params.put(BilinearLearnerParameters.WINITSTRAT, new SingleValueInitStrat(0.1));
 		params.put(BilinearLearnerParameters.UINITSTRAT, new SparseZerosInitStrategy());
+		HardCodedInitStrat biasInitStrat = new HardCodedInitStrat();
+		params.put(BilinearLearnerParameters.BIASINITSTRAT, biasInitStrat);
 		BillMatlabFileDataGenerator bmfdg = new BillMatlabFileDataGenerator(
 				new File(BILL_DATA()), 
 				98,
 				true
 		);
 		prepareExperimentLog(params);
-		double dampening = 0d;
-		double dampeningIncr = 0.00001d;
-		double dampeningMax = 0.001d;
+		double dampening = 0.02d;
+		double dampeningIncr = 0.1d;
+		double dampeningMax = 0.021d;
 		int maxItems = 15;
 		logger.debug(
 			String.format(
@@ -82,9 +88,14 @@ public class StreamAustrianDampeningExperiments extends BilinearExperiment{
 			BilinearEvaluator eval = new RootMeanSumLossEvaluator();
 			eval.setLearner(learner);
 			bmfdg.setFold(-1, Mode.ALL); // go through all items in day order
+			boolean first = true;
 			while(true){
 				Pair<Matrix> next = bmfdg.generate();
 				if(next == null) break;
+				if(first){
+					first = false;
+					biasInitStrat.setMatrix(next.secondObject());
+				}
 				List<Pair<Matrix>> asList = new ArrayList<Pair<Matrix>>();
 				asList.add(next);
 				if(learner.getW() != null){
