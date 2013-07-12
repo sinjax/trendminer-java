@@ -66,7 +66,7 @@ public class LinearRegressionProcessor implements TimeSeriesProcessor<double[], 
 
 	@Override
 	public void process(DoubleTimeSeries series) {
-		Matrix x = new Matrix(new double[][]{ArrayUtils.longToDouble(series.getTimes())}).transpose();
+		Matrix x = new Matrix(new double[][]{ArrayUtils.convertToDouble(series.getTimes())}).transpose();
 		if(!regdefined)
 		{
 			this.reg = new LinearRegression();

@@ -37,6 +37,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -49,8 +50,6 @@ import org.openimaj.text.nlp.TweetTokeniser;
 import org.openimaj.text.nlp.TweetTokeniserException;
 import org.openimaj.twitter.GeneralJSONTwitter;
 import org.openimaj.twitter.USMFStatus;
-
-import com.hadoop.mapreduce.LzoTextInputFormat;
 
 
 public class HadoopLZOTest extends Configured implements Tool{
@@ -106,14 +105,20 @@ public class HadoopLZOTest extends Configured implements Tool{
 		Path out = new Path(args[1]);
 		HadoopToolsUtil.validateOutput(args[1], true);
 		Job job = new Job(this.getConf());
-		
-		job.setInputFormatClass(LzoTextInputFormat.class);
+		Class<? extends InputFormat> lzoClass ;
+		try {
+			lzoClass = (Class<? extends InputFormat>) Class.forName("com.hadoop.mapreduce.LzoTextInputFormat");
+		} catch (final ClassNotFoundException nfe) {
+			System.err.println("LZO not installed; skipping");
+			return -1;
+		}
+		job.setInputFormatClass(lzoClass);
 		job.setOutputKeyClass(LongWritable.class);
 		job.setOutputValueClass(Text.class);
 		job.setOutputFormatClass(TextOutputFormat.class);
 		job.setJarByClass(this.getClass());
 	
-		LzoTextInputFormat.setInputPaths(job, paths);
+		lzoClass.getMethod("setInputPaths", Path[].class).invoke(null, paths);
 		TextOutputFormat.setOutputPath(job, out);
 		job.setMapperClass(CounterMapper.class);
 		job.setReducerClass(CounterReducer.class);

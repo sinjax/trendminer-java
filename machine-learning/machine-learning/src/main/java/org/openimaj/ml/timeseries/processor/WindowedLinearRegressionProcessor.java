@@ -115,7 +115,7 @@ public class WindowedLinearRegressionProcessor implements TimeSeriesProcessor<do
 
 	@Override
 	public void process(DoubleTimeSeries series) {
-		Matrix x = new Matrix(new double[][]{ArrayUtils.longToDouble(series.getTimes())}).transpose();
+		Matrix x = new Matrix(new double[][]{ArrayUtils.convertToDouble(series.getTimes())}).transpose();
 		List<IndependentPair<double[], double[]>> instances = new ArrayList<IndependentPair<double[], double[]>>();
 		double[] data = series.getData();
 		
