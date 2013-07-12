@@ -34,6 +34,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import libsvm.svm;
+
 import org.openimaj.text.nlp.TweetTokeniser;
 import org.openimaj.text.nlp.language.LanguageDetector.WeightedLocale;
 import org.openimaj.twitter.USMFStatus;
