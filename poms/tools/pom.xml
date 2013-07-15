@@ -29,5 +29,6 @@
 	</developers>
 	<modules>
 		<module>TwitterPreprocessingTool</module>
+		<module>TwitterPreprocessingWebService</module>
 	</modules>
 </project>

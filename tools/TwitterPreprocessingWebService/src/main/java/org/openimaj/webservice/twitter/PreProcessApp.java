@@ -3,6 +3,7 @@ package org.openimaj.webservice.twitter;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +13,8 @@ import java.util.Scanner;
 import javax.jws.WebService;
 
 import org.apache.log4j.Logger;
+import org.openimaj.tools.twitter.modes.preprocessing.TwitterPreprocessingMode;
+import org.openimaj.tools.twitter.modes.preprocessing.TwitterPreprocessingModeOption;
 import org.openimaj.twitter.GeneralJSON;
 import org.openimaj.twitter.GeneralJSONTwitter;
 import org.openimaj.twitter.USMFStatus;
@@ -47,10 +50,22 @@ public class PreProcessApp extends Application {
 				Scanner dataScanner = new Scanner(data);
 				InputStream is = new ByteArrayInputStream( data.getBytes("UTF-8") );
 				List<USMFStatus> list = StreamTwitterStatusList.readUSMF(is, inputClass,"UTF-8");
-				String[] modes = this.getQuery().getValuesArray("m");
-				System.out.println(Arrays.toString(modes));
+				List<TwitterPreprocessingMode<?>> modes  = null;
+				try {
+					modes = preprocessingModes(this.getQuery().getValuesArray("m"));
+				} catch (Exception e) {
+					logger.error("Could not produce preprocessing modes",e);
+					return null;
+				}
+				
 				for (USMFStatus usmfStatus : list) {
-					
+					for (TwitterPreprocessingMode<?> mode: modes) {
+						try {
+							TwitterPreprocessingMode.results(usmfStatus, mode);
+						} catch (Exception e) {
+							logger.error(String.format("Problem producing %s for %s",usmfStatus.id,mode.toString()), e);
+						}
+					}
 				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -59,6 +74,20 @@ public class PreProcessApp extends Application {
 			Map<Object,Object> retMap = new HashMap<Object, Object>();
 			JsonRepresentation ret = new JsonRepresentation(gson.toJson(retMap));
 			return ret;
+		}
+		
+		/**
+		 * @return an instance of the selected preprocessing mode
+		 * @throws Exception
+		 */
+		public List<TwitterPreprocessingMode<?>> preprocessingModes(String[] modeStrings) throws Exception {
+			ArrayList<TwitterPreprocessingMode<?>> modes = new ArrayList<TwitterPreprocessingMode<?>>();
+			for (String modeString: modeStrings) {
+				if(!TwitterPreprocessingModeOption.)
+				TwitterPreprocessingModeOption valueOf = TwitterPreprocessingModeOption.valueOf(modeString);
+				modes.add(valueOf.getOptions());
+			}
+			return modes;
 		}
 
 		private Class<? extends GeneralJSON> getTypeClass(String intype) {
