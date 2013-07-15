@@ -27,15 +27,24 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.openimaj.twitter.utils;
+package org.openimaj.tools.twitter.modes.filter;
 
-import java.io.File;
+import org.openimaj.twitter.USMFStatus;
+import org.openimaj.util.function.Predicate;
 
-import org.openimaj.twitter.collection.TwitterStatusList;
+/**
+ * A filter takes in a status and filters the status (says whether it should remain or be deleted)
+ * based on some internal process
+ * 
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
+ *
+ */
+public abstract class TwitterPreprocessingPredicate implements Predicate<USMFStatus> {
 
-public class TwitterUtils {
-	public TwitterStatusList load(File f){
-		return null;
+	/**
+	 * Prepare the filter
+	 */
+	public void validate(){
 		
 	}
 }

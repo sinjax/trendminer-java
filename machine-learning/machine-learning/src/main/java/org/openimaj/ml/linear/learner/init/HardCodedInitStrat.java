@@ -17,7 +17,7 @@ public class HardCodedInitStrat implements InitStrategy{
 		int mrows = mat.getNumRows();
 		int mcols = mat.getNumColumns();
 		if(mrows == rows && mcols == cols) return mat;
-		
+
 		if(rows == cols && mcols == rows){
 			Matrix retMat = SparseMatrixFactoryMTJ.getSparseDefault().createMatrix(rows, rows);
 			for (int i = 0; i < mcols; i++) {
@@ -27,7 +27,11 @@ public class HardCodedInitStrat implements InitStrategy{
 		}
 		return mat;
 	}
-	
+
+	/**
+	 * The matrix to init things to
+	 * @param m
+	 */
 	public void setMatrix(Matrix m){
 		this.mat = m;
 	}

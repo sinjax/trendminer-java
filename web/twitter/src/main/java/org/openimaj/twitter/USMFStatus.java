@@ -56,7 +56,7 @@ import com.google.gson.Gson;
  *         (ss@ecs.soton.ac.uk), Laurence Willmore (lgw1e10@ecs.soton.ac.uk)
  *
  */
-public class USMFStatus extends GeneralJSON implements Cloneable {
+public class USMFStatus extends GeneralJSON implements Cloneable{
 	private static final Logger logger = Logger.getLogger(USMFStatus.class);
 	private transient Class<? extends GeneralJSON> generalJSONclass; // class of
 																		// the
@@ -159,6 +159,11 @@ public class USMFStatus extends GeneralJSON implements Cloneable {
 	 * List of links
 	 */
 	public ArrayList<Link> links;
+
+	/**
+	 * the ISO A2 country code
+	 */
+	public String country_code;
 
 	private boolean invalid = false;
 
@@ -384,7 +389,7 @@ public class USMFStatus extends GeneralJSON implements Cloneable {
 	/**
 	 * Container object to hold user information
 	 *
-	 * @author laurence
+	 * @author Laurence Willmore (lgw1e10@ecs.soton.ac.uk)
 	 *
 	 */
 	public static class User {
@@ -476,7 +481,7 @@ public class USMFStatus extends GeneralJSON implements Cloneable {
 	/**
 	 * Container object for holding link information
 	 *
-	 * @author laurence
+	 * @author Laurence Willmore (lgw1e10@ecs.soton.ac.uk)
 	 *
 	 */
 	public static class Link {
