@@ -35,6 +35,11 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.geonames</groupId>
+			<artifactId>geonames</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
 			<groupId>org.openimaj.tools</groupId>
 			<artifactId>core-tool</artifactId>
 			<version>${openimajversion}</version>
