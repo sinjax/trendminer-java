@@ -1,0 +1,145 @@
+/**
+ * Copyright (c) 2011, The University of Southampton and the individual contributors.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *   * 	Redistributions of source code must retain the above copyright notice,
+ * 	this list of conditions and the following disclaimer.
+ *
+ *   *	Redistributions in binary form must reproduce the above copyright notice,
+ * 	this list of conditions and the following disclaimer in the documentation
+ * 	and/or other materials provided with the distribution.
+ *
+ *   *	Neither the name of the University of Southampton nor the names of its
+ * 	contributors may be used to endorse or promote products derived from this
+ * 	software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+package org.openimaj.ml.clustering.random;
+
+import java.util.Arrays;
+import java.util.Random;
+
+import org.openimaj.data.DataSource;
+import org.openimaj.ml.clustering.#T#CentroidsResult;
+import org.openimaj.ml.clustering.SpatialClusterer;
+
+/**
+ * A simple (yet apparently quite effective in high dimensions) 
+ * clustering technique trained used randomly sampled data points. A 
+ * configurable number of data points are selected from the training data to
+ * represent the centroids.
+ *
+ * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
+ *
+ */
+public class Random#T#Clusterer implements SpatialClusterer<#T#CentroidsResult, #t#[]> {
+	protected int M;
+	protected int K;
+	protected Random random;
+	protected long seed;
+	
+	/**
+	 * Creates a new random byte cluster used to create K centroids with data containing M elements.
+	 * 
+	 * @param M number of elements in each data vector
+	 * @param K number of centroids to be created
+	 */
+	public Random#T#Clusterer(int M, int K) {
+		this.M = M;
+		this.K = K;
+		this.random = new Random();
+		this.seed = -1;
+	}
+	
+	/**
+	 * Creates a new random byte cluster used to create centroids with data containing M elements. The 
+	 * number of clusters will be equal to the number of data points provided in training.
+	 *
+	 * @param M number of elements in each data vector
+	 */
+	public Random#T#Clusterer(int M) {
+		this(M, -1);
+	}
+		
+	/**
+	 * @param seed the seed for the {@link Random} object used to select random data points.
+	 */
+	public void setSeed(long seed) {
+		this.random = new Random();
+		random.setSeed(seed);
+		this.seed = seed;
+	}
+	
+	/***
+	 * Selects K elements from the provided data as the centroids of the clusters. If K is -1 all provided
+	 * data points will be selected. It is not guaranteed that the same data point will not be selected
+	 * many times.
+	 * 
+	 * @params data source of centroids
+	 * @return the selected centroids
+	 */
+	@Override
+	public #T#CentroidsResult cluster(#t#[][] data) {
+		int nc = this.K;
+		
+		if (nc == -1) {
+			nc = data.length;
+		}
+		
+		#T#CentroidsResult result = new #T#CentroidsResult();
+		result.centroids = new #t#[nc][];
+		
+		for (int i = 0; i < nc; i++) {
+			int dIndex = this.random.nextInt(data.length);
+			
+			result.centroids[i] = Arrays.copyOf(data[dIndex], data[dIndex].length);
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * Selects K elements from the provided {@link DataSource} as the centroids of the clusters. 
+	 * If K is -1 all provided data points will be selected. It is not guaranteed that the same data 
+	 * point will not be selected many times.
+	 * 
+	 * @params data a data source object
+	 * @return the selected centroids
+	 */
+	@Override
+	public #T#CentroidsResult cluster(DataSource<#t#[]> data) {
+		int nc = this.K;
+		
+		if (nc == -1) {
+			nc = data.numRows();
+		}
+		
+		#T#CentroidsResult result = new #T#CentroidsResult();
+		result.centroids = new #t#[nc][M];
+		#t#[][] dataRow = new #t#[1][];
+		
+		for (int i = 0; i < nc; i++) {
+			int dIndex = this.random.nextInt(data.numRows());
+			dataRow[0] = result.centroids[i];
+			
+			data.getData(dIndex, dIndex+1, dataRow);
+		}
+		
+		return result;
+	}
+}

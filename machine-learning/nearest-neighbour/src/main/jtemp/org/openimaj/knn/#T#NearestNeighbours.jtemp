@@ -1,0 +1,150 @@
+/**
+ * Copyright (c) 2011, The University of Southampton and the individual contributors.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *   * 	Redistributions of source code must retain the above copyright notice,
+ * 	this list of conditions and the following disclaimer.
+ *
+ *   *	Redistributions in binary form must reproduce the above copyright notice,
+ * 	this list of conditions and the following disclaimer in the documentation
+ * 	and/or other materials provided with the distribution.
+ *
+ *   *	Neither the name of the University of Southampton nor the names of its
+ * 	contributors may be used to endorse or promote products derived from this
+ * 	software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/*** 
+	{ m -> 
+		if (m['T'] == DOUBLE) {
+			return (m['R'] == DOUBLE); 		
+		}
+		if (m['T'] == LONG) {
+			return (m['R'] == DOUBLE); 		
+		}
+		return (m['R'] == FLOAT);
+	}
+***/
+package org.openimaj.knn;
+
+import org.openimaj.feature.#T#FVComparator;
+
+import org.openimaj.util.pair.Int#R#Pair;
+
+/**
+ * Abstract base class for k-nearest-neighbour calculations with #t#[] data.
+ * 
+ * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
+ */
+public abstract class #T#NearestNeighbours implements NearestNeighbours<#t#[], #r#[], Int#R#Pair> {
+	/**
+	 * Static method to find the sum-squared distance between
+	 * a query vector and each of a set of points. Results are stored 
+	 * in the dsq_out array, much must have the same length as the number
+	 * of points.
+	 * @param qu The query vector.
+	 * @param pnts The points to compare against.
+	 * @param dsq_out The resultant distances. 
+	 */
+	public static void distanceFunc(final #t# [] qu, final #t# [][] pnts, #r# [] dsq_out) {
+		final int N = pnts.length;
+		final int D = pnts[0].length;
+		
+		for (int n=0; n < N; ++n) {
+			dsq_out[n] = 0;
+			for (int d=0; d<D; ++d) {
+				dsq_out[n] += (qu[d] - pnts[n][d]) * (qu[d] - pnts[n][d]);
+			}
+		}
+	}
+	
+	/**
+	 * Static method to find the sum-squared distance between
+	 * a query vector and a point. 
+	 
+	 * @param qu The query vector.
+	 * @param pnt The point to compare against.
+	 * @return The resultant distance.
+	 */
+	public static #r# distanceFunc(final #t# [] qu, final #t# [] pnt) {
+		final int D = pnt.length;
+		
+		#r# dsq_out = 0;
+		for (int d=0; d<D; ++d) {
+			dsq_out += (qu[d] - pnt[d]) * (qu[d] - pnt[d]);
+		}
+		
+		return dsq_out;
+	}
+
+	/**
+	 * Static method to find a distance between
+	 * a query vector and a point.
+	 *
+	 * @param distance the distance measure
+	 * @param qu The query vector.
+	 * @param pnt The point to compare against.
+	 * @return The resultant distance. 
+	 */
+	public static #r# distanceFunc(final #T#FVComparator distance, final #t# [] qu, final #t# [] pnt) {
+		if (distance == null) {
+			return distanceFunc(qu, pnt);
+		}
+		
+		if (distance.isDistance()) {
+			return (#r#) distance.compare(qu, pnt);
+		} else {
+            return - (#r#) distance.compare(qu, pnt);
+		}
+	}
+	
+	/**
+	 * Static method to find a distance between
+	 * a query vector and each of a set of points. Results are stored 
+	 * in the dsq_out array, much must have the same length as the number
+	 * of points.
+	 * @param distance the distance measure
+	 * @param qu The query vector.
+	 * @param pnts The points to compare against.
+	 * @param dsq_out The resultant distances. 
+	 */
+	public static void distanceFunc(final #T#FVComparator distance, final #t# [] qu, final #t# [][] pnts, #r# [] dsq_out) {
+		if (distance == null) {
+			distanceFunc(qu, pnts, dsq_out);
+			return;
+		}
+		
+		final int N = pnts.length;
+
+		if (distance.isDistance()) {
+			for (int n=0; n < N; ++n) {
+				dsq_out[n] = (#r#) distance.compare(qu, pnts[n]);
+			}	
+		} else {
+			for (int n=0; n < N; ++n) {
+				dsq_out[n] = - (#r#) distance.compare(qu, pnts[n]);
+			}
+		}
+	}
+	
+	/**
+	 * Get the number of dimensions of each vector in the dataset
+	 * 
+	 * @return the number of dimensions
+	 */
+	public abstract int numDimensions();
+}

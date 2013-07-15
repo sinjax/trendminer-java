@@ -1,0 +1,122 @@
+/**
+ * Copyright (c) 2011, The University of Southampton and the individual contributors.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *   * 	Redistributions of source code must retain the above copyright notice,
+ * 	this list of conditions and the following disclaimer.
+ *
+ *   *	Redistributions in binary form must reproduce the above copyright notice,
+ * 	this list of conditions and the following disclaimer in the documentation
+ * 	and/or other materials provided with the distribution.
+ *
+ *   *	Neither the name of the University of Southampton nor the names of its
+ * 	contributors may be used to endorse or promote products derived from this
+ * 	software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+package org.openimaj.lsh.functions;
+
+import org.openimaj.citation.annotation.Reference;
+import org.openimaj.citation.annotation.ReferenceType;
+import org.openimaj.feature.#T#FVComparison;
+import org.openimaj.util.array.Sparse#T#Array;
+
+import cern.jet.random.Uniform;
+import cern.jet.random.engine.MersenneTwister;
+
+/**
+ * A hash function factory that produces hash functions that approximate L1
+ * (city-block) distance in closed spaces using random axis-aligned hyperplanes.
+ * <p>
+ * The hash function hashes the input vector into a binary value (i.e. 0 or 1). 
+ * It works by choosing a random dimension and a random threshold along that 
+ * dimension (between a given minimum and maximum which define the closed space).
+ * Input vectors whose element at the chosen dimension is greater than or equal
+ * to the threshold generate a 1; values less than the threshold generate a 0. 
+ * 
+ * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
+ */
+ @Reference(
+	type = ReferenceType.Inproceedings,
+	author = { "Lv, Qin", "Charikar, Moses", "Li, Kai" },
+	title = "Image similarity search with compact data structures",
+	year = "2004",
+	booktitle = "Proceedings of the thirteenth ACM international conference on Information and knowledge management",
+	pages = { "208", "", "217" },
+	url = "http://doi.acm.org/10.1145/1031171.1031213",
+	publisher = "ACM",
+	series = "CIKM '04"
+)
+public class #T#HyperplaneL1Factory extends #T#HashFunctionFactory {
+	private class Function extends #T#HashFunction {
+		int dimension;
+		double shift;
+
+		Function(int ndims, MersenneTwister rng) {
+			super(rng);
+
+            Uniform uniform = new Uniform(rng);
+
+			// choose a random dimension
+			dimension = uniform.nextIntFromTo(0, ndims - 1);
+
+			// random shift
+			shift = uniform.nextDoubleFromTo(min, max);
+		}
+
+		@Override
+		public int computeHashCode(#t#[] point) {
+			return (point[dimension] - shift) >= 0 ? 1 : 0;
+		}
+
+		@Override
+		public int computeHashCode(Sparse#T#Array array) {
+			return (array.get(dimension) - shift) >= 0 ? 1 : 0;
+		}
+	}
+
+	#t# min = 0;
+	#t# max = 1;
+
+	/**
+	 * Construct with the given arguments.
+	 * 
+	 * @param ndims
+	 *            The number of dimensions
+	 * @param rng
+	 *            A random number generator
+	 * @param min
+	 *            The minimum bound of the space
+	 * @param max
+	 *            The maximum bound of the space
+	 */
+	public #T#HyperplaneL1Factory(int ndims, MersenneTwister rng, #t# min, #t# max) {
+		super(ndims, rng);
+
+		this.min = min;
+		this.max = max;
+	}
+
+	@Override
+	public Function create() {
+		return new Function(ndims, rng);
+	}
+
+	@Override
+	protected #T#FVComparison fvDistanceFunction() {
+		return #T#FVComparison.CITY_BLOCK;
+	}
+}

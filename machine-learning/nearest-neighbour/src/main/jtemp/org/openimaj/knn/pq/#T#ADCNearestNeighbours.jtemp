@@ -1,0 +1,299 @@
+/**
+ * Copyright (c) 2011, The University of Southampton and the individual contributors.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *   * 	Redistributions of source code must retain the above copyright notice,
+ * 	this list of conditions and the following disclaimer.
+ *
+ *   *	Redistributions in binary form must reproduce the above copyright notice,
+ * 	this list of conditions and the following disclaimer in the documentation
+ * 	and/or other materials provided with the distribution.
+ *
+ *   *	Neither the name of the University of Southampton nor the names of its
+ * 	contributors may be used to endorse or promote products derived from this
+ * 	software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+ 
+ /*** 
+ 	{ m -> 
+ 		if (m['T'] == DOUBLE) {
+ 			return (m['R'] == DOUBLE); 		
+ 		}
+ 		if (m['T'] == LONG) {
+ 			return (m['R'] == DOUBLE);
+ 		}
+ 		return (m['R'] == FLOAT);
+ 	}
+ ***/
+
+package org.openimaj.knn.pq;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.openimaj.citation.annotation.Reference;
+import org.openimaj.citation.annotation.ReferenceType;
+import org.openimaj.knn.#T#NearestNeighbours;
+import org.openimaj.util.pair.Int#R#Pair;
+import org.openimaj.util.queue.BoundedPriorityQueue;
+/**
+ * Nearest-neighbours using Asymmetric Distance Computation (ADC) on Product
+ * Quantised vectors. In ADC, only the database points are quantised. The
+ * queries themselves are not quantised. The overall distance is computed as the
+ * summed distance of each subvector of the query to each corresponding
+ * centroids of each database vector.
+ * <p>
+ * For efficiency, the distance of each sub-vector of a query is computed to
+ * every centroid (for the sub-vector under consideration) only once, and is
+ * then cached for the lookup during the computation of the distance to each
+ * database vector.
+ * 
+ * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
+ */
+@Reference(
+		type = ReferenceType.Article,
+		author = { "Jegou, Herve", "Douze, Matthijs", "Schmid, Cordelia" },
+		title = "Product Quantization for Nearest Neighbor Search",
+		year = "2011",
+		journal = "IEEE Trans. Pattern Anal. Mach. Intell.",
+		pages = { "117", "", "128" },
+		url = "http://dx.doi.org/10.1109/TPAMI.2010.57",
+		month = "January",
+		number = "1",
+		publisher = "IEEE Computer Society",
+		volume = "33",
+		customData = {
+				"issn", "0162-8828",
+				"numpages", "12",
+				"doi", "10.1109/TPAMI.2010.57",
+				"acmid", "1916695",
+				"address", "Washington, DC, USA",
+				"keywords", "High-dimensional indexing, High-dimensional indexing, image indexing, very large databases, approximate search., approximate search., image indexing, very large databases"
+		})
+public class #T#ADCNearestNeighbours extends #T#NearestNeighbours {
+	protected final #T#ProductQuantiser pq;
+	protected final int ndims;
+	protected final byte[][] data;
+
+	/**
+	 * Construct the ADC with the given quantiser and data points.
+	 * 
+	 * @param pq
+	 *            the Product Quantiser
+	 * @param dataPoints
+	 *            the data points to index
+	 */
+	public #T#ADCNearestNeighbours(#T#ProductQuantiser pq, #t#[][] dataPoints) {
+		this.pq = pq;
+		this.ndims = dataPoints[0].length;
+
+		this.data = new byte[dataPoints.length][];
+		for (int i = 0; i < dataPoints.length; i++) {
+			data[i] = pq.quantise(dataPoints[i]);
+		}
+	}
+
+	@Override
+	public void searchNN(final #t# [][] qus, int [] indices, #r# [] distances) {
+		final int N = qus.length;
+		
+		final BoundedPriorityQueue<Int#R#Pair> queue =
+				new BoundedPriorityQueue<Int#R#Pair>(1, Int#R#Pair.SECOND_ITEM_ASCENDING_COMPARATOR);
+
+        //prepare working data
+		List<Int#R#Pair> list = new ArrayList<Int#R#Pair>(2);
+		list.add(new Int#R#Pair());
+		list.add(new Int#R#Pair());
+		
+		for (int n=0; n < N; ++n) {
+			List<Int#R#Pair> result = search(qus[n], queue, list);
+			
+			final Int#R#Pair p = result.get(0);
+			indices[n] = p.first;
+			distances[n] = p.second;
+		}
+	}
+
+	@Override
+	public void searchKNN(final #t# [][] qus, int K, int [][] indices, #r# [][] distances) {
+		// Fix for when the user asks for too many points.
+		K = Math.min(K, data.length);
+
+		final int N = qus.length;
+
+		final BoundedPriorityQueue<Int#R#Pair> queue =
+				new BoundedPriorityQueue<Int#R#Pair>(K, Int#R#Pair.SECOND_ITEM_ASCENDING_COMPARATOR);
+
+        //prepare working data
+		List<Int#R#Pair> list = new ArrayList<Int#R#Pair>(K + 1);
+		for (int i = 0; i < K + 1; i++) {
+			list.add(new Int#R#Pair());
+		}
+
+        // search on each query
+		for (int n = 0; n < N; ++n) {
+			List<Int#R#Pair> result = search(qus[n], queue, list);
+			
+			for (int k = 0; k < K; ++k) {
+				final Int#R#Pair p = result.get(k);
+				indices[n][k] = p.first;
+				distances[n][k] = p.second;
+			}
+		}
+	}
+	
+	@Override
+	public void searchNN(final List<#t#[]> qus, int [] indices, #r# [] distances) {
+		final int N = qus.size();
+		
+		final BoundedPriorityQueue<Int#R#Pair> queue =
+				new BoundedPriorityQueue<Int#R#Pair>(1, Int#R#Pair.SECOND_ITEM_ASCENDING_COMPARATOR);
+
+        //prepare working data
+		List<Int#R#Pair> list = new ArrayList<Int#R#Pair>(2);
+		list.add(new Int#R#Pair());
+		list.add(new Int#R#Pair());
+		
+		for (int n=0; n < N; ++n) {
+			List<Int#R#Pair> result = search(qus.get(n), queue, list);
+			
+			final Int#R#Pair p = result.get(0);
+			indices[n] = p.first;
+			distances[n] = p.second;
+		}
+	}
+
+	@Override
+	public void searchKNN(final List<#t#[]> qus, int K, int [][] indices, #r# [][] distances) {
+		// Fix for when the user asks for too many points.
+		K = Math.min(K, data.length);
+
+		final int N = qus.size();
+
+		final BoundedPriorityQueue<Int#R#Pair> queue =
+				new BoundedPriorityQueue<Int#R#Pair>(K, Int#R#Pair.SECOND_ITEM_ASCENDING_COMPARATOR);
+
+        //prepare working data
+		List<Int#R#Pair> list = new ArrayList<Int#R#Pair>(K + 1);
+		for (int i = 0; i < K + 1; i++) {
+			list.add(new Int#R#Pair());
+		}
+
+        // search on each query
+		for (int n = 0; n < N; ++n) {
+			List<Int#R#Pair> result = search(qus.get(n), queue, list);
+			
+			for (int k = 0; k < K; ++k) {
+				final Int#R#Pair p = result.get(k);
+				indices[n][k] = p.first;
+				distances[n][k] = p.second;
+			}
+		}
+	}
+
+    @Override
+	public List<Int#R#Pair> searchKNN(#t#[] query, int K) {
+		// Fix for when the user asks for too many points.
+		K = Math.min(K, data.length);
+
+		final BoundedPriorityQueue<Int#R#Pair> queue =
+				new BoundedPriorityQueue<Int#R#Pair>(K, Int#R#Pair.SECOND_ITEM_ASCENDING_COMPARATOR);
+
+        //prepare working data
+		List<Int#R#Pair> list = new ArrayList<Int#R#Pair>(K + 1);
+		for (int i = 0; i < K + 1; i++) {
+			list.add(new Int#R#Pair());
+		}
+
+        // search
+        return search(query, queue, list);
+	}
+
+	@Override
+	public Int#R#Pair searchNN(final #t#[] query) {
+		final BoundedPriorityQueue<Int#R#Pair> queue =
+				new BoundedPriorityQueue<Int#R#Pair>(1, Int#R#Pair.SECOND_ITEM_ASCENDING_COMPARATOR);
+
+        //prepare working data
+		List<Int#R#Pair> list = new ArrayList<Int#R#Pair>(2);
+		list.add(new Int#R#Pair());
+		list.add(new Int#R#Pair());
+		
+		return search(query, queue, list).get(0);
+	}
+
+    private List<Int#R#Pair> search(#t#[] query, BoundedPriorityQueue<Int#R#Pair> queue, List<Int#R#Pair> results) {
+        Int#R#Pair wp = null;
+        
+        // reset all values in the queue to MAX, -1
+		for (final Int#R#Pair p : results) {
+			p.second = Float.MAX_VALUE;
+			p.first = -1;
+			wp = queue.offerItem(p);
+		}
+
+        // perform the search
+		computeDistances(query, queue, wp);
+		
+        return queue.toOrderedListDestructive();
+    }
+    
+    protected void computeDistances(#t#[] fullQuery, BoundedPriorityQueue<Int#R#Pair> queue, Int#R#Pair wp) {
+		final #r#[][] distances = new #r#[pq.assigners.length][];
+
+		for (int j = 0, from = 0; j < this.pq.assigners.length; j++) {
+			final #T#NearestNeighbours nn = this.pq.assigners[j];
+			final int to = nn.numDimensions();
+			final int K = nn.size();
+
+			final #t#[][] qus = { Arrays.copyOfRange(fullQuery, from, from + to) };
+			final int[][] idx = new int[1][K];
+			final #r#[][] dst = new #r#[1][K];
+			nn.searchKNN(qus, K, idx, dst);
+
+			distances[j] = new #r#[K];
+			for (int k = 0; k < K; k++) {
+				distances[j][idx[0][k]] = dst[0][k];
+			}
+
+			from += to;
+		}
+
+		for (int i = 0; i < data.length; i++) {
+			wp.first = i;
+			wp.second = 0;
+
+			for (int j = 0; j < this.pq.assigners.length; j++) {
+				final int centroid = this.data[i][j] + 128;
+				wp.second += distances[j][centroid];
+			}
+
+			wp = queue.offerItem(wp);
+		}
+	}
+
+	@Override
+	public int numDimensions() {
+		return ndims;
+	}
+
+	@Override
+	public int size() {
+		return data.length;
+	}
+}

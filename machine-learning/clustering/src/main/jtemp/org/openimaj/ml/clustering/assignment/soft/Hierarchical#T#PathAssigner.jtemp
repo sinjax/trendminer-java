@@ -1,0 +1,163 @@
+/**
+ * Copyright (c) 2011, The University of Southampton and the individual contributors.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *   * 	Redistributions of source code must retain the above copyright notice,
+ * 	this list of conditions and the following disclaimer.
+ *
+ *   *	Redistributions in binary form must reproduce the above copyright notice,
+ * 	this list of conditions and the following disclaimer in the documentation
+ * 	and/or other materials provided with the distribution.
+ *
+ *   *	Neither the name of the University of Southampton nor the names of its
+ * 	contributors may be used to endorse or promote products derived from this
+ * 	software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/*** 
+	{ m -> 
+		if (m['T'] == DOUBLE) {
+			return (m['R'] == DOUBLE); 		
+		}
+		if (m['T'] == LONG) {
+			return (m['R'] == DOUBLE); 
+		}
+		return (m['R'] == FLOAT);
+	}
+***/
+
+package org.openimaj.ml.clustering.assignment.soft;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.openimaj.ml.clustering.assignment.HardAssigner;
+import org.openimaj.ml.clustering.assignment.SoftAssigner;
+import org.openimaj.ml.clustering.assignment.hard.Exact#T#Assigner;
+import org.openimaj.ml.clustering.CentroidsProvider;
+import org.openimaj.ml.clustering.kmeans.Hierarchical#T#KMeansResult;
+import org.openimaj.ml.clustering.kmeans.Hierarchical#T#KMeansResult.Node;
+import org.openimaj.util.pair.IndependentPair;
+import org.openimaj.util.pair.Int#R#Pair;
+
+/**
+ * A {@link SoftAssigner} for gathering the clusters assigned
+ * to a point from a hierarchical clustering. The returned clusters
+ * represent the path down the tree to the final closest leaf node.
+ * 
+ * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
+ */
+public class Hierarchical#T#PathAssigner implements SoftAssigner<#t#[], #r#[]> {
+	protected Hierarchical#T#KMeansResult result;
+	protected Map<CentroidsProvider<#t#[]>, HardAssigner<#t#[], #r#[], Int#R#Pair>> assigners;
+	
+	/**
+	 * Construct with the given {@link Hierarchical#T#KMeansResult} instance.
+	 * @param result the {@link Hierarchical#T#KMeansResult} instance.
+	 */
+	public Hierarchical#T#PathAssigner(Hierarchical#T#KMeansResult result) {
+		this.result = result;
+		assigners = new HashMap<CentroidsProvider<#t#[]>, HardAssigner<#t#[], #r#[], Int#R#Pair>>();
+	}
+	
+	@Override
+	public int[][] assign(#t#[][] data) {
+		int[][] assignments = new int[data.length][result.getDepth()];
+		
+		for (int i = 0; i < data.length; i++) {
+			Node node = result.getRoot();
+			
+			int d = 0;
+			while (node != null) {
+				HardAssigner<#t#[], #r#[], Int#R#Pair> assigner = assigners.get(node.result);
+				
+				if (assigner == null) {
+					assigner = new Exact#T#Assigner(node.result);
+					assigners.put(node.result, assigner);
+				}
+				
+				int best = assigner.assign(data[i]);
+
+				assignments[i][d] = best;
+				++d;
+
+				if (node.children == null)
+					break;
+				node = node.children[best];
+			}
+		}
+		
+		return assignments;
+	}
+
+	@Override
+	public int[] assign(#t#[] data) {
+		return assign(new #t#[][] {data})[0];
+	}
+
+	@Override
+	public void assignWeighted(#t#[][] data, int[][] assignments, #r#[][] weights) {
+		int depth = result.getDepth();
+		
+		for (int i = 0; i < data.length; i++) {
+			Node node = result.getRoot();
+			
+			if (assignments[i].length != depth)
+				assignments[i] = new int[depth];
+			Arrays.fill(assignments, -1);
+			
+			if (weights[i].length != depth)
+				weights[i] = new #r#[depth];
+			
+			int d = 0;
+			while (node != null) {
+				HardAssigner<#t#[], #r#[], Int#R#Pair> assigner = assigners.get(node.result);
+				
+				if (assigner == null) {
+					assigner = new Exact#T#Assigner(node.result);
+					assigners.put(node.result, assigner);
+				}
+				
+				Int#R#Pair best = assigner.assignDistance(data[i]);
+				
+				assignments[i][d] = best.first;
+				weights[i][d] = best.second;
+				++d;
+
+				if (node.children == null)
+					break;
+				
+				node = node.children[best.first];
+			}
+		}
+	}
+
+	@Override
+	public IndependentPair<int[], #r#[]> assignWeighted(#t#[] data) {
+		int[][] assignments = new int[1][];
+		#r#[][] weights = new #r#[1][];
+		
+		assignWeighted(new #t#[][] { data }, assignments, weights);
+		
+		return new IndependentPair<int[], #r#[]>(assignments[0], weights[0]);
+	}
+	
+	@Override
+	public int numDimensions() {
+	    return result.numDimensions();
+	}
+}

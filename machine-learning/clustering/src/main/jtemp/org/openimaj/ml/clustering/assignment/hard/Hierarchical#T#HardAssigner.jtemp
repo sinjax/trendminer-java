@@ -1,0 +1,234 @@
+/**
+ * Copyright (c) 2011, The University of Southampton and the individual contributors.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *   * 	Redistributions of source code must retain the above copyright notice,
+ * 	this list of conditions and the following disclaimer.
+ *
+ *   *	Redistributions in binary form must reproduce the above copyright notice,
+ * 	this list of conditions and the following disclaimer in the documentation
+ * 	and/or other materials provided with the distribution.
+ *
+ *   *	Neither the name of the University of Southampton nor the names of its
+ * 	contributors may be used to endorse or promote products derived from this
+ * 	software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/*** 
+	{ m -> 
+		if (m['T'] == DOUBLE) {
+			return (m['R'] == DOUBLE); 		
+		}
+		if (m['T'] == LONG) {
+			return (m['R'] == DOUBLE); 
+		}
+		return (m['R'] == FLOAT);
+	}
+***/
+
+package org.openimaj.ml.clustering.assignment.hard;
+
+import org.openimaj.ml.clustering.assignment.HardAssigner;
+import org.openimaj.ml.clustering.assignment.soft.Hierarchical#T#PathAssigner;
+import org.openimaj.ml.clustering.kmeans.Hierarchical#T#KMeansResult;
+import org.openimaj.util.pair.IndependentPair;
+import org.openimaj.util.pair.Int#R#Pair;
+
+/**
+ * The {@link Hierarchical#T#HardAssigner} is a {@link HardAssigner} for
+ * {@link Hierarchical#T#KMeansResult} instances. The assigner
+ * produces the index of the assigned leaf node as if the clusters were
+ * actually flat. 
+ * 
+ * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
+ */
+public class Hierarchical#T#HardAssigner implements HardAssigner<#t#[], #r#[], Int#R#Pair> {
+	/**
+	 * The {@link ScoringScheme} determines how the distance
+	 * to a cluster is estimated from the hierarchy of k-means
+	 * generated clusters.
+	 * 
+	 * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
+	 */
+	public enum ScoringScheme {
+		/**
+		 * Sum distances down the tree.
+		 * 
+		 * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
+		 */
+		SUM {
+			@Override
+			public #r# computeScore(#r#[] weights) {
+				#r# sum = 0;
+				for (#r# w : weights) {
+					if (w < 0) break;
+					sum += w;
+				}
+				
+				return sum;
+			}
+		},
+		/**
+		 * Product of distances down the tree.
+		 * 
+		 * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
+		 */
+		PRODUCT {
+			@Override
+			public #r# computeScore(#r#[] weights) {
+				#r# prod = 1;
+				for (#r# w : weights) {
+					if (w < 0) break;
+					prod *= w;
+				}
+				
+				return prod;
+			}
+		},
+		/**
+		 * The distance in the root cluster 
+		 * 
+		 * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
+		 */
+		FIRST {
+			@Override
+			public #r# computeScore(#r#[] weights) {
+				return weights[0];
+			}
+		},
+		/**
+		 * The distance in the leaf cluster
+		 * 
+		 * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
+		 */
+		LAST {
+			@Override
+			public #r# computeScore(#r#[] weights) {
+				#r# last = -1;
+				
+				for (#r# w : weights) {
+					if (w < 0) break;
+					last = w;
+				}
+				
+				return last;
+			}
+		},
+		/**
+		 * The mean distance down the tree
+		 * 
+		 * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
+		 */
+		MEAN {
+			@Override
+			public #r# computeScore(#r#[] weights) {
+				#r# sum = 0;
+				int count = 0;
+				
+				for (#r# w : weights) {
+					if (w < 0) break;
+					sum += w;
+					count++;
+				}
+				
+				return sum / (#r#)count;
+			}
+		}
+		;
+		
+		protected abstract #r# computeScore(#r#[] weights); 
+	}
+	
+	protected Hierarchical#T#KMeansResult result;
+	protected Hierarchical#T#PathAssigner path;
+	protected ScoringScheme scorer;
+	
+	/**
+	 * Construct with the given hierarchical KMeans clusterer
+	 * and scoring scheme.
+	 *
+	 * @param result the hierarchical KMeans clusterer
+	 * @param scorer the scoring scheme
+	 */
+	public Hierarchical#T#HardAssigner(Hierarchical#T#KMeansResult result, ScoringScheme scorer) {
+		this.result = result;
+		this.scorer = scorer;
+		this.path = new Hierarchical#T#PathAssigner(result);
+	}
+
+	/**
+	 * Construct with the given Hierarchical KMeans clusterer
+	 * and the SUM scoring scheme.
+	 *
+	 * @param result the hierarchical KMeans clusterer
+	 */
+	public Hierarchical#T#HardAssigner(Hierarchical#T#KMeansResult result) {
+		this(result, ScoringScheme.SUM);
+	}
+	
+	@Override
+	public int[] assign(#t#[][] data) {
+		int [] asgn = new int[data.length];
+
+		for (int i=0; i<data.length; i++) {
+			asgn[i] = result.getIndex(path.assign(data[i]));
+		}
+
+		return asgn;
+	}
+
+	@Override
+	public int assign(#t#[] data) {
+		return result.getIndex(path.assign(data));
+	}
+
+	@Override
+	public void assignDistance(#t#[][] data, int[] indices, #r#[] distances) {
+		int depth = result.getDepth();
+		#t# [][] d = new #t#[1][];
+		int [][] p = new int[1][depth];
+		#r# [][] w = new #r#[1][depth];
+		
+		for (int i=0; i<data.length; i++) {
+			d[0] = data[i];
+			
+			path.assignWeighted(d, p, w);
+			
+			indices[i] = result.getIndex(p[0]);
+			distances[i] = scorer.computeScore(w[0]);
+		}
+	}
+
+	@Override
+	public Int#R#Pair assignDistance(#t#[] data) {
+		IndependentPair<int[], #r#[]> pw = path.assignWeighted(data);
+		
+		int index = result.getIndex(pw.firstObject());
+		#r# score = scorer.computeScore(pw.secondObject());
+		
+		return new Int#R#Pair(index, score);
+	}
+	
+	@Override
+	public int size() {
+	    return result.countLeafs();
+	}
+	
+	@Override
+	public int numDimensions() {
+	    return result.numDimensions();
+	}
+}

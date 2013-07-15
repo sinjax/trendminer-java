@@ -1,0 +1,382 @@
+/**
+ * Copyright (c) 2011, The University of Southampton and the individual contributors.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *   * 	Redistributions of source code must retain the above copyright notice,
+ * 	this list of conditions and the following disclaimer.
+ *
+ *   *	Redistributions in binary form must reproduce the above copyright notice,
+ * 	this list of conditions and the following disclaimer in the documentation
+ * 	and/or other materials provided with the distribution.
+ *
+ *   *	Neither the name of the University of Southampton nor the names of its
+ * 	contributors may be used to endorse or promote products derived from this
+ * 	software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+package org.openimaj.ml.clustering.kmeans;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Scanner;
+
+import org.openimaj.ml.clustering.#T#CentroidsResult;
+import org.openimaj.ml.clustering.SpatialClusters;
+import org.openimaj.ml.clustering.assignment.hard.Hierarchical#T#HardAssigner;
+
+/** 
+ * The result of a {@link Hierarchical#T#KMeans} clustering operation.
+ *
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
+ * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
+ */
+public class Hierarchical#T#KMeansResult implements SpatialClusters<#t#[]> {
+	/**
+	 * Hierarchical#T#KMeans tree node
+	 *
+	 * The number of children is not bigger than the Hierarchical#T#KMeans K parameter
+	 **/
+	public static class Node {
+		/** {@link #T#CentroidsResult} for this node */
+		public #T#CentroidsResult result;
+
+		/** Node children (if any) */
+		public Node[] children;
+	}
+	
+	private static final String HEADER = SpatialClusters.CLUSTER_HEADER + "H" +"#T#".charAt(0) + "KM";
+	
+	/** Data dimensionality */
+	int M;
+
+	/** K clusters per node */
+	int K;
+	
+	/** Depth of the tree */
+	int depth;
+	
+	/** Tree root node */
+	Node root;
+
+	protected Hierarchical#T#KMeansResult() {}
+
+	@Override
+	public int numDimensions() {
+		return M;
+	}
+	
+	/**
+	 * Get the number of clusters per node
+	 * @return number of clusters per node
+	 */
+	public int getK() {
+		return K;
+	}
+
+	/**
+	 * Get the depth of the cluster tree
+	 * @return the depth of the cluster tree
+	 */
+	public int getDepth() {
+		return depth;
+	}
+
+	/**
+	 * Get the root node of the tree
+	 * @return the root node of the tree
+	 */
+	public Node getRoot() {
+		return root;
+	}
+
+	private static int ipow(int x, int y) {
+		int sum = 1;
+		for (int i=0; i<y; i++) 
+			sum *= x;
+		return sum;
+	}
+
+	/**
+	 * Translates a path down the KDTree as a cluster index. This allows the specification of K and the depth
+	 * @param path
+	 * @param depth
+	 * @param K
+	 * @return cluster index
+	 */
+	public static int getIndex(int [] path, int depth, int K) {
+		int idx = 0;
+
+		for (int i=0; i<depth; i++) 
+			idx += path[i] * ipow(K, depth-1-i);
+
+		return idx;
+	}
+
+	/**
+	 * Translates a path down the KDTree as a cluster index. 
+	 * @param path
+	 * @return cluster index
+	 */
+	public int getIndex(int [] path) {
+		return getIndex(path, depth, K);
+	}
+
+	/**
+	 * Given an index, what was the path down the hierarchy that lead to it. Allows the specification of
+	 * depth and number of clusters. 
+	 * @param index
+	 * @param depth
+	 * @param K
+	 * @return a hierarchy path
+	 */
+	public static int [] getPath(int index, int depth, int K) {
+		int [] path = new int[depth];
+
+		for (int i=0; i<depth; i++) {
+			int v = ipow(K, depth-1-i);
+
+			for (int j=0; j<K; j++) {	
+				int vp = v * j;
+				int vpn = v * (j+1);
+
+				if (index < vpn) {
+					path[i] = j;
+					index -= vp;
+					break;
+				}
+			}
+		}
+
+		return path;
+	}
+
+	/**
+	 * Given an index, what was the path down the hierarchy that lead to it. Assumes the class depth and K.
+	 * @param index
+	 * @return a hierarchy path
+	 */
+	public int [] getPath(int index) {
+		return getPath(index, depth, K);
+	}
+
+	private int countLeaves(Node node) {
+		int count = 0;
+		if (node.children == null) {
+			count = node.result.numClusters();
+		} else {
+			for (int i=0; i<node.result.numClusters(); i++) {
+				count += countLeaves(node.children[i]);
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Count number of active leaf nodes.
+	 * @return number of nodes.
+	 */
+	public int countActiveLeafNodes() {
+		return countLeaves(root);
+	}
+	
+	@Override
+	public String toString() {
+		String s = "";
+		s += String.format("Number of dimensions:               %d\n", M);
+		s += String.format("Number of clusters:                 %d\n", K);
+		s += String.format("Number of levels:                   %d\n", depth);
+		s += String.format("Maximum number of leaf nodes:       %d\n", ipow(K, depth));
+		s += String.format("Number of leaf active nodes:        %d", countActiveLeafNodes());
+		return s;
+	}
+
+	/**
+	 * Total number of leaves assuming leaves = K^depth
+	 * @return number of leaves
+	 */
+	public int countLeafs() {
+		return ipow(K, depth);
+	}
+
+	@Override
+	public int numClusters() {
+		return this.countLeafs();
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if(!(o instanceof Hierarchical#T#KMeansResult)) return false;
+		
+		Hierarchical#T#KMeansResult other = (Hierarchical#T#KMeansResult) o;
+		
+		return other.countActiveLeafNodes() == this.countActiveLeafNodes() && 
+				other.getDepth() == this.getDepth() &&
+				other.getK() == this.getK() &&
+				other.numDimensions() == this.numDimensions();
+	}
+	
+	/**
+	 * Given a path, get the cluster centroid associated with the cluster index of the path.  
+	 * @param path
+	 * @return the centroid of a given path
+	 */
+	public #t# [] getClusterCentroid(int [] path) {
+		Node node = root;
+		
+		for (int i=0; i<path.length-1; i++) {
+			node = node.children[path[i]];
+		}
+		
+		return node.result.getCentroids()[path[path.length-1]];
+	}
+	
+	@Override
+	public String asciiHeader() {
+		return "ASCII"+HEADER;
+	}
+
+	@Override
+	public byte[] binaryHeader() {
+		return HEADER.getBytes();
+	}
+
+	@Override
+	public void readASCII(Scanner reader) throws IOException {
+		M = Integer.parseInt(reader.nextLine());
+		K = Integer.parseInt(reader.nextLine());
+		depth = Integer.parseInt(reader.nextLine());
+
+		root = readNode(this,reader);
+	}
+	
+	private Node readNode(Hierarchical#T#KMeansResult h#T#km, Scanner reader) throws IOException {
+		String line;
+		
+		while ((line = reader.nextLine()).length()==0) {/*do nothing*/}
+		
+		char type = line.charAt(0);
+
+		//read result data
+		Node node = new Node();
+		node.result = new #T#CentroidsResult();
+		node.result.readASCII(reader);
+		
+		if (type == 'I') {
+			node.children = new Node[node.result.numClusters()];
+
+			for (int i=0; i<node.result.numClusters(); i++) {
+				node.children[i] = readNode(h#T#km,reader);
+			}
+		} else {
+			node.children = null;
+		}
+
+		return node ;
+	}
+	
+	@Override
+	public void readBinary(DataInput dis) throws IOException {
+		M = dis.readInt();
+		K = dis.readInt();
+		depth = dis.readInt();
+
+		root = readNodeB(this,dis);
+	}
+	
+	private Node readNodeB(Hierarchical#T#KMeansResult h#T#km, DataInput dis) throws IOException {
+		Node node = new Node();
+		char type = (char) dis.readByte();
+
+		//read result data
+		node.result = new #T#CentroidsResult();
+		node.result.readBinary(dis);
+		
+		if (type == 'I') {
+			node.children = new Node[node.result.numClusters()];
+
+			for (int i=0; i<node.result.numClusters(); i++) {
+				node.children[i] = readNodeB(h#T#km, dis);
+			}
+		} else {
+			node.children = null;
+		}
+
+		return node ;
+	}
+	
+	@Override
+	public void writeASCII(PrintWriter writer) throws IOException {
+		writer.format("%d\n", this.M);
+		writer.format("%d\n", this.K);
+		writer.format("%d\n", this.depth);
+
+		writeNodeASCII(writer, this.root);
+	}
+	
+	private void writeNodeASCII(PrintWriter writer, final Node node) throws IOException {
+		//write node type
+		if (node.children == null) 
+			writer.write("L\n"); //intermediate
+		else
+			writer.write("I\n"); //leaf
+
+		//write result data
+		node.result.writeASCII(writer); // node.result.writeASCII(writer, false);
+		writer.flush();
+		//write children
+		if (node.children != null) {
+			for (int i=0; i<node.result.numClusters(); i++) {
+				writeNodeASCII(writer, node.children[i]);
+			}
+		}
+	}
+	
+	@Override
+	public void writeBinary(DataOutput dos) throws IOException {	
+		dos.writeInt(this.M);
+		dos.writeInt(this.K);
+		dos.writeInt(this.depth);
+	
+		writeNodeB(dos, this.root);
+	}
+	
+	private void writeNodeB(DataOutput dos, Node node) throws IOException {
+		//write node type
+		char type;
+		if (node.children == null) 
+			type='L'; //intermediate
+		else
+			type='I'; //leaf
+		dos.writeByte(type);
+
+		//write result data
+		node.result.writeBinary(dos);
+
+		//write children
+		if (node.children != null) {
+			for (int i=0; i<node.result.numClusters(); i++) {
+				writeNodeB(dos, node.children[i]);
+			}
+		}
+	}
+	
+	@Override
+	public Hierarchical#T#HardAssigner defaultHardAssigner() {
+		return new Hierarchical#T#HardAssigner(this);
+	}
+}

@@ -1,0 +1,121 @@
+/**
+ * Copyright (c) 2011, The University of Southampton and the individual contributors.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *   * 	Redistributions of source code must retain the above copyright notice,
+ * 	this list of conditions and the following disclaimer.
+ *
+ *   *	Redistributions in binary form must reproduce the above copyright notice,
+ * 	this list of conditions and the following disclaimer in the documentation
+ * 	and/or other materials provided with the distribution.
+ *
+ *   *	Neither the name of the University of Southampton nor the names of its
+ * 	contributors may be used to endorse or promote products derived from this
+ * 	software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/*** 
+	{ m -> 
+		if (m['T'] == DOUBLE) {
+			return (m['R'] == DOUBLE); 		
+		}
+		if (m['T'] == LONG) {
+			return (m['R'] == DOUBLE);
+		}
+		return (m['R'] == FLOAT);
+	}
+***/
+package org.openimaj.knn;
+
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
+import org.openimaj.data.RandomData;
+import org.openimaj.knn.approximate.#T#NearestNeighboursKDTree;
+
+/**
+ * Tests for the #T#NearestNeighbour class
+ * 
+ * @author Sina Samangooei (ss@ecs.soton.ac.uk)
+ * @author Jonathon Hare (jsh2@ecs.soton.ac.uk)
+ */
+public class #T#NearestNeighbourTest {
+	/**
+	 * Test performance with random data
+	 */
+	@Test
+	public void perf_kdtree_random() {
+		int N = 1000;
+	    int D = 128;
+	    
+	    #t# [][] pnts = RandomData.getRandom#T#Array(N, D, (#t#)-127, (#t#)127, 42);
+	    #t# [][] qus = RandomData.getRandom#T#Array(N, D, (#t#)-127, (#t#)127, 43);
+	    
+	    System.out.println("Testing with random data:");
+	    perf_kdtree(pnts, qus);
+	}
+	
+	private void perf_kdtree(#t# [][] pnts, #t# [][] qus) {
+	    #r# [] distances_exact = new #r#[qus.length];
+	    int [] indices_exact = new int[qus.length];
+	    #r# [] distances_kdt = new #r#[qus.length];
+	    int [] indices_kdt = new int[qus.length];
+
+	    #T#NearestNeighbours nnobj_exact = new #T#NearestNeighboursExact(pnts);
+	    #T#NearestNeighbours nnobj_kdt = new #T#NearestNeighboursKDTree(pnts, 8, 768);
+
+	    long t1 = System.currentTimeMillis();
+	    nnobj_exact.searchNN(qus, indices_exact, distances_exact);
+	    long t2 = System.currentTimeMillis();
+	    nnobj_kdt.searchNN(qus, indices_kdt, distances_kdt);
+	    long t3 = System.currentTimeMillis();
+	    
+	    System.out.println("#T# Exact took  " + (t2 - t1) + "ms");
+	    System.out.println("#T# Approx took " + (t3 - t2) + "ms");
+	    
+	    int num_same = 0;
+	    for (int n = 0; n < qus.length; ++n) {
+	        if (indices_exact[n] == indices_kdt[n]) num_same++;
+	    }
+	    
+	    double accuracy = (double)num_same/qus.length;
+	    System.out.format("#T# Accuracy: %.1f%%\n", accuracy*100.0);
+	}
+	
+	/**
+	 * Simple test with 4 2-d points
+	 */
+	@Test
+	public void testSimple() {
+	    #t# [][] pnts = {{0, 0}, {127, 0}, {127, 127}, {127, 0}};
+	    #t# [][] qus = {{20, 10}};
+
+	    #r# [][] dist = new #r#[qus.length][4];
+	    int [][] indx = new int[qus.length][4];
+        #T#NearestNeighbours nn = new #T#NearestNeighboursExact(pnts);
+        nn.searchKNN(qus, 4, indx, dist);
+        
+        assertEquals(0, indx[0][0]);
+        assertEquals(1, indx[0][1]);
+        assertEquals(3, indx[0][2]);
+        assertEquals(2, indx[0][3]);
+        
+        #r# [] dist2 = new #r#[qus.length];
+	    int [] indx2 = new int[qus.length];
+        nn.searchNN(qus, indx2, dist2);
+        assertEquals(0, indx2[0]);
+	}
+}
