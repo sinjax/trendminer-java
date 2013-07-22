@@ -91,4 +91,16 @@ public class LiblinearHelper {
 
 		return out;
 	}
+
+	/**
+	 * Convert a {@link FeatureVector} to an array of doubles using
+	 * {@link FeatureVector#asDoubleVector()}.
+	 * 
+	 * @param feature
+	 *            the feature
+	 * @return the double[] version of the feature
+	 */
+	public static double[] convertDense(FeatureVector feature) {
+		return feature.asDoubleVector();
+	}
 }
