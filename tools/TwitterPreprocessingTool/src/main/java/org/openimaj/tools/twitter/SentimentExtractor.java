@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.openimaj.tools.twitter.modes.preprocessing.LocationDetectionMode;
 
 /**
  *
@@ -25,10 +27,9 @@ public abstract class SentimentExtractor {
     public abstract Map<String, Object> extract(List<String> strings);
 
     public static class MockSentiment extends SentimentExtractor {
-        private String mpqaN = "C:/Users/bill/trendminer-java/tools/"
-                + "TwitterPreprocessingTool/src/main/resources/mpqan.txt";
-        private String mpqaP = "C:/Users/bill/trendminer-java/tools/"
-                + "TwitterPreprocessingTool/src/main/resources/mpqap.txt";
+        private String mpqaN = "/org/openimaj/tools/sentiment/mpqan.txt"; 
+        private String mpqaP = "/org/openimaj/tools/sentiment/mpqap.txt" ;
+        
         
         @Override
         public Map<String, Object> extract(List<String> strings) {
@@ -73,8 +74,10 @@ public abstract class SentimentExtractor {
             
             BufferedReader br = null;
             try {
-                br = new BufferedReader(new FileReader(filepath));
-            } catch (FileNotFoundException ex) {
+
+//                br = new BufferedReader(new FileReader(filepath));
+                br = new BufferedReader(new InputStreamReader(LocationDetectionMode.class.getResourceAsStream(filepath), "UTF-8"));
+            } catch (Exception ex) {
                 Logger.getLogger(SentimentExtractor.class.getName()).log(Level.SEVERE, null, ex);
             }
             try{

@@ -32,6 +32,7 @@ public class SentimentExtractionTest {
     public TemporaryFolder folder = new TemporaryFolder();
     
     private File fileFromStream(InputStream stream) throws IOException {
+            System.out.println(stream);
             File f = folder.newFile("tweet" + stream.hashCode() + ".txt");
             PrintWriter writer = new PrintWriter(f,"UTF-8");
             BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
