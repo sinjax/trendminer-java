@@ -63,6 +63,11 @@
 			<version>1.92</version>
 		</dependency>
 		<dependency>
+			<groupId>de.bwaldvogel</groupId>
+			<artifactId>liblinear-dense</artifactId>
+			<version>1.92</version>
+		</dependency>
+		<dependency>
 			<groupId>net.sourceforge.jmatio</groupId>
 			<artifactId>jmatio</artifactId>
 			<version>1.1</version>
