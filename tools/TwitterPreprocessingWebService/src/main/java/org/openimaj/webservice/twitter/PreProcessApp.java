@@ -126,8 +126,8 @@ public class PreProcessApp extends Application {
 				if (MediaType.MULTIPART_FORM_DATA.equals(entity.getMediaType(),true)) {
 					try {
 						logger.debug("Starting input thread");
-//						new Thread(new PreProcessTask(getRequest(), options)).start();
-						new Thread(new PreProcessFileUploadTask(getRequest(), options)).start();
+						new Thread(new PreProcessTask(getRequest(), options)).start();
+//						new Thread(new PreProcessFileUploadTask(getRequest(), options)).start();
 					} catch (IOException e) {
 						logger.error("No input data found");
 						this.setStatus(Status.SERVER_ERROR_INTERNAL);

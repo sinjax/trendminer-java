@@ -88,7 +88,7 @@ class PreProcessFileUploadTask extends FileUpload implements Runnable {
 	}
 
 	private void consumeStream(InputStream fi) throws Exception {
-		List<USMFStatus> list = StreamTwitterStatusList.readUSMF(fi, options.getOutputClass().type(), "UTF-8");
+		List<USMFStatus> list = StreamTwitterStatusList.readUSMF(fi, options.getInputClass().type(), "UTF-8");
 		long seen = 0;
 		for (USMFStatus usmfStatus : list) {
 			LoggerUtils.debug(logger, String.format("Processing item: %d",seen++), seen%1000==0);

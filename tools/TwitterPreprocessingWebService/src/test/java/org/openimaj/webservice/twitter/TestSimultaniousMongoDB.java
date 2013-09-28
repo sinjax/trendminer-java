@@ -62,7 +62,7 @@ public class TestSimultaniousMongoDB {
 				while(all.hasNext()){
 					DBObject obj = all.next();
 					System.out.println(obj.get("cheese"));
-					seen = (int) obj.get("count");
+					seen = (Integer) obj.get("count");
 				}
 			}
 		}

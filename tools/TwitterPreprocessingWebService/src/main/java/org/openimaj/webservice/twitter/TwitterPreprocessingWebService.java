@@ -29,6 +29,9 @@ public class TwitterPreprocessingWebService extends Component{
 	}
 	
 	public static void main(String[] args) throws Exception {
-		new TwitterPreprocessingWebService(8181).start();
+		if(args.length == 0)
+			new TwitterPreprocessingWebService(8181).start();
+		else
+			new TwitterPreprocessingWebService(Integer.parseInt(args[0])).start();
 	}
 }

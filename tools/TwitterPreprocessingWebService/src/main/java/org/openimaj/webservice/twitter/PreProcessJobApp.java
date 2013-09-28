@@ -222,7 +222,7 @@ public class PreProcessJobApp extends Application {
 						logger.debug("Query performed, found: " + ret.count());
 						while(ret.hasNext()){
 							DBObject obj = ret.next();
-							int ccount = (int) obj.get("count");
+							int ccount = (Integer) obj.get("count");
 							if(obj.containsField("final") || (end != -1 && ccount >= end)){
 								logger.debug("Query performed, found: " + ret.count());
 								finalfound = true;

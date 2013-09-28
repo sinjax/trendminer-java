@@ -59,7 +59,7 @@ class PreProcessTask implements Runnable {
 	public void run() {
 		try{
 			logger.debug("Processing all requests");
-			List<USMFStatus> list = StreamTwitterStatusList.readUSMF(fi.getInputStream(), options.getOutputClass().type(), "UTF-8");
+			List<USMFStatus> list = StreamTwitterStatusList.readUSMF(fi.getInputStream(), options.getInputClass().type(), "UTF-8");
 			long seen = 0;
 			for (USMFStatus usmfStatus : list) {
 				LoggerUtils.debug(logger, String.format("Processing item: %d",seen++), seen%1000==0);

@@ -103,7 +103,7 @@ public class TestTwittePreprocessingWebService {
 					if(sent == null) {
 						continue;
 					}
-					double pos = (double) sent.get("sentiment_positive");
+					double pos = (Double) sent.get("sentiment_positive");
 					if(pos > 0){
 						countpos ++;
 					} 
@@ -175,7 +175,7 @@ public class TestTwittePreprocessingWebService {
 			if(sent == null) {
 				continue;
 			}
-			double pos = (double) sent.get("sentiment_positive");
+			double pos = (Double) sent.get("sentiment_positive");
 			if(pos > 0){
 				count ++;
 			}
