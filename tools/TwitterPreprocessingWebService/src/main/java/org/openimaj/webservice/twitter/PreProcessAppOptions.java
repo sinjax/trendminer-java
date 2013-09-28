@@ -38,17 +38,11 @@ class PreProcessAppOptions extends
 	}
 	private static String[] constructArgs(Form query, Map<String, Object> reqAttr) {
 		List<String> arglist = new ArrayList<String>();
-		List<String> argNames = new ArrayList<String>();
-		for (int i = 0; i < query.size(); i++) {
-			String paramname = query.get(i).getName();
-			if(!argNames.contains(paramname)){
-				argNames.add(paramname);
-			}
-		}
-		for (String arg : argNames) {
-			String[] argvals = query.getValuesArray(arg);
+		Set<String> argNames = query.getNames();
+		for (String argName : argNames) {
+			String[] argvals = query.getValuesArray(argName);
 			for (String argval : argvals) {
-				arglist.add(String.format("-%s", arg));
+				arglist.add(String.format("-%s", argName));
 				arglist.add(String.format("%s", argval));
 			}
 		}
