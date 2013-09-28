@@ -31,6 +31,7 @@ package org.openimaj.tools.twitter.options;
 
 import org.openimaj.twitter.GeneralJSON;
 import org.openimaj.twitter.GeneralJSONRDF;
+import org.openimaj.twitter.GeneralJSONRubyT;
 import org.openimaj.twitter.GeneralJSONTwitter;
 import org.openimaj.twitter.GeneralJSONTwitterRawText;
 import org.openimaj.twitter.USMFStatus;
@@ -60,6 +61,15 @@ public enum StatusType {
 		@Override
 		public Class<? extends GeneralJSON> type() {
 			return USMFStatus.class;
+		}
+	},
+	/**
+	 * the USMF json status type
+	 */
+	RUBYT {
+		@Override
+		public Class<? extends GeneralJSON> type() {
+			return GeneralJSONRubyT.class;
 		}
 	},
 	RDF {

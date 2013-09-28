@@ -16,10 +16,10 @@ import org.restlet.data.Protocol;
  */
 public class TwitterPreprocessingWebService extends Component{
 
-	public TwitterPreprocessingWebService() throws Exception {
+	public TwitterPreprocessingWebService(String port) throws Exception {
 		loadProps();
 		this.getContext().getLogger().setLevel(java.util.logging.Level.ALL);
-		getServers().add(Protocol.HTTP,Integer.parseInt("8080"));
+		getServers().add(Protocol.HTTP,Integer.parseInt(port));
 		getDefaultHost().attach("/process", new PreProcessApp());
 		getDefaultHost().attach("/job", new PreProcessJobApp());
 		LoggerUtils.prepareConsoleLogger();
@@ -37,6 +37,10 @@ public class TwitterPreprocessingWebService extends Component{
 	}
 	
 	public static void main(String[] args) throws Exception {
-		new TwitterPreprocessingWebService().start();
+		if(args.length == 0)
+			new TwitterPreprocessingWebService("8080").start();
+		else
+			new TwitterPreprocessingWebService(args[0]).start();
+		
 	}
 }

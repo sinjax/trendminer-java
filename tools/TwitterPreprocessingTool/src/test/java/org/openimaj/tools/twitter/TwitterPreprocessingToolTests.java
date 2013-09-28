@@ -77,6 +77,7 @@ public class TwitterPreprocessingToolTests {
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
 
+	private static final String RUBYT_TWITTER = "/org/openimaj/twitter/rubyt.txt";
 	private static final String JSON_TWITTER = "/org/openimaj/twitter/json_tweets.txt";
 	private static final String GEO_JSON_TWITTER = "/org/openimaj/twitter/geo-sample.json";
 	private static final String JSON_TWITTER_UTF = "/org/openimaj/twitter/json_tweets_utf.txt";
@@ -88,6 +89,7 @@ public class TwitterPreprocessingToolTests {
 	private static final String ACCIDENTLY_BROKEN = "/org/openimaj/twitter/accidentlyBrokenTweet.json";
 
 	private File jsonTwitterInputFile;
+	private File rubyTInputFile;
 	private File jsonTwitterUTFInputFile;
 	private File rawTwitterInputFile;
 	private String commandFormat;
@@ -115,6 +117,7 @@ public class TwitterPreprocessingToolTests {
 		monthLongTwitterInputFile = fileFromStream(TwitterPreprocessingToolTests.class.getResourceAsStream(MONTH_LONG_TWITTER));
 		retweetedStatusFile = fileFromStream(TwitterPreprocessingToolTests.class.getResourceAsStream(RETWEETED_STATUS));
 		accidentlyBrokenFile = fileFromStream(TwitterPreprocessingToolTests.class.getResourceAsStream(ACCIDENTLY_BROKEN));
+		rubyTInputFile = fileFromStream(TwitterPreprocessingToolTests.class.getResourceAsStream(RUBYT_TWITTER));
 
 		commandFormat = "-i %s -o %s -m %s -om %s -rm -q";
 	}
@@ -444,6 +447,27 @@ public class TwitterPreprocessingToolTests {
 		TwitterPreprocessingTool.main(commandArgsArr);
 
 		FileTwitterStatusList<USMFStatus> fl = FileTwitterStatusList.readUSMF(monthLongTwitterInputFile,"UTF-8");
+		System.out.println(fl.size());
+		FileTwitterStatusList<USMFStatus> fldate = FileTwitterStatusList.readUSMF(stemOutRAW,"UTF-8");
+		System.out.println(fldate.size());
+	}
+	
+	/**
+	 * Stem using some more difficult raw text
+	 *
+	 * @throws IOException
+	 */
+	@Test
+	public void testTweetTokRubyT() throws IOException{
+		String stemMode = "TOKENISE";
+		File stemOutRAW = folder.newFile("stem-testTweetStemJSON.json");
+		String commandArgs = String.format(commandFormat,rubyTInputFile ,stemOutRAW,stemMode,"APPEND");
+		commandArgs += " -prf GREP -r .*the.* -it RUBYT";
+		String[] commandArgsArr = commandArgs.split(" ");
+		System.out.println("Date Filtering");
+		TwitterPreprocessingTool.main(commandArgsArr);
+
+		FileTwitterStatusList<USMFStatus> fl = FileTwitterStatusList.readUSMF(rubyTInputFile,"UTF-8");
 		System.out.println(fl.size());
 		FileTwitterStatusList<USMFStatus> fldate = FileTwitterStatusList.readUSMF(stemOutRAW,"UTF-8");
 		System.out.println(fldate.size());

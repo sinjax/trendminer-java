@@ -50,6 +50,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.openimaj.io.IOUtils;
+import org.openimaj.twitter.GeneralJSON;
+import org.openimaj.twitter.GeneralJSONRubyT;
 import org.openimaj.twitter.GeneralJSONTwitter;
 import org.openimaj.twitter.GeneralJSONTwitterRawText;
 import org.openimaj.twitter.USMFStatus;
@@ -202,6 +204,28 @@ public class TwitterUtilsTest {
 				assertTrue(eq);
 		}
 	}
+	
+	@Test
+	public void readTweetsFromRubyTWriteToTweets() throws IOException{
+		InputStream strm = USMFStatus.class.getResourceAsStream("/org/openimaj/twitter/rubyt.txt");
+		File twitterfile = fileFromeStream(strm);
+		FileTwitterStatusList<USMFStatus> status = FileTwitterStatusList.readUSMF(twitterfile,"UTF-8",GeneralJSONRubyT.class);
+		MemoryTwitterStatusList<USMFStatus> memoryLoaded = new MemoryTwitterStatusList<USMFStatus>(status.randomSubList(10));
+		// add some cheeky analysis
+		for (USMFStatus usmfStatus : memoryLoaded) {
+			usmfStatus.addAnalysis("thing-int", 1);
+			usmfStatus.addAnalysis("thing-str", "str");
+		}
+		File ascii = folder.newFile("twitter" +twitterfile.hashCode()+ ".csv");
+		IOUtils.writeASCII(ascii, new ConvertUSMFList(memoryLoaded,USMFStatus.class),"UTF-8");
+		FileTwitterStatusList<USMFStatus> loadedFromWritten = FileTwitterStatusList.readUSMF(ascii,"UTF-8",USMFStatus.class);
+		MemoryTwitterStatusList<USMFStatus> memoryLoadedFromWritten = new MemoryTwitterStatusList<USMFStatus>(loadedFromWritten);
+		for (int i = 0; i < memoryLoaded.size(); i++) {
+			boolean eq = memoryLoaded.get(i).equals(memoryLoadedFromWritten.get(i));
+			if(!eq)
+				assertTrue(eq);
+		}
+	}
 
 	@Test
 	public void readBrokenUTFTweet() throws IOException{
@@ -236,10 +260,12 @@ public class TwitterUtilsTest {
 
 	protected File fileFromeStream(InputStream stream) throws IOException {
 		File f = folder.newFile("broken_raw"+stream.hashCode()+".txt");
-		PrintWriter writer = new PrintWriter(new BufferedOutputStream(new FileOutputStream(f)));
-		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+		PrintWriter writer = new PrintWriter(f,"UTF-8");
+		BufferedReader reader = new BufferedReader(new InputStreamReader(stream,"UTF-8"));
 		String line = null;
-		while((line = reader.readLine()) != null){writer.println(line);}
+		while((line = reader.readLine()) != null){
+			writer.println(line);
+		}
 		writer.flush(); writer.close();
 		return f;
 	}

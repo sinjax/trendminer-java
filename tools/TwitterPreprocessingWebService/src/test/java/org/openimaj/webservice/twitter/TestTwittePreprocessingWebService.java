@@ -56,7 +56,7 @@ public class TestTwittePreprocessingWebService {
 	private TwitterPreprocessingWebService server;
 	@Before
 	public void createServer() throws Exception{
-		this.server = new TwitterPreprocessingWebService();
+		this.server = new TwitterPreprocessingWebService("8080");
 		this.server.start();
 		
 	}

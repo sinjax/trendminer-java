@@ -194,7 +194,7 @@ public class FileTwitterStatusList<T extends USMFStatus> extends AbstractFileBac
 	protected AbstractFileBackedList<T> newInstance(int newSize, boolean isBinary, int newHeaderLength, int recordLength,
 			File file)
 	{
-		return new FileTwitterStatusList<T>(newSize, file, this.charset, this.clz);
+		return new FileTwitterStatusList<T>(newSize, file, this.charset, this.clz, this.seedClass);
 	}
 
 	public static List<USMFStatus> readUSMF(File f, Class<? extends GeneralJSON> generalJSON) {
